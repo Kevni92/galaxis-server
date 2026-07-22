@@ -4,11 +4,12 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-PLATFORM-REPO-001
+## Status: A0 / GAL-PLATFORM-RUNTIME-001
 
-Issue #2 macht die in Issue #1 festgelegte Struktur nach einem frischen Clone
-baubar, testbar und lokal startfähig. Diese Basis enthält absichtlich keine
-HTTP-Routen, Datenbanktabellen, Authentifizierung, Kampagnen oder Gameplaylogik.
+Issue #3 ergänzt die baubare Basis um strikt validierte Runtime-Konfiguration,
+strukturiertes Pino-Logging, technische Health-Endpunkte und einen kontrollierten
+Shutdown-Lifecycle. Es gibt weiterhin keine Datenbanktabellen,
+Authentifizierung, Kampagnen oder Gameplaylogik.
 
 ## Verbindlicher Stack
 
@@ -23,8 +24,8 @@ HTTP-Routen, Datenbanktabellen, Authentifizierung, Kampagnen oder Gameplaylogik.
 
 Die installierbaren Abhängigkeiten und Versionen sind in
 [`package.json`](package.json) und [`pnpm-lock.yaml`](pnpm-lock.yaml) festgelegt.
-Der minimale Entrypoint startet eine leere Fastify-Anwendung; fachliche und
-produktive HTTP-Module folgen in späteren A0-Issues.
+Der Entrypoint startet eine kleine Fastify-Anwendung. Fachliche und produktive
+HTTP-Module folgen in späteren A0-Issues.
 
 ## Frischer Checkout
 
@@ -48,16 +49,25 @@ Basis noch nicht erforderlich. Die Installation kann mit
 `docker compose version` geprüft werden; der PostgreSQL-Compose-Stack gehört
 zu Issue #4.
 
-Lokaler Start und Produktionsbuild:
+Lokaler Start und Produktionsbuild. `GALAXIS_PORT` und `GALAXIS_LOG_LEVEL`
+sind Pflichtwerte; weitere Werte stehen in [`.env.example`](.env.example):
+
+```powershell
+$env:GALAXIS_PORT="3000"
+$env:GALAXIS_LOG_LEVEL="info"
+pnpm dev
+```
 
 ```bash
-pnpm dev
+GALAXIS_PORT=3000 GALAXIS_LOG_LEVEL=info pnpm dev
 pnpm build
 pnpm start
 ```
 
-Der Server lauscht lokal auf `127.0.0.1:3000` und registriert in Issue #2
-bewusst keine Route.
+Der Server lauscht standardmäßig auf `127.0.0.1:3000`. `GET /health/live`
+prüft nur, ob der Prozess HTTP-Anfragen bedient. `GET /health/ready` verwendet
+eine injizierte Readiness-Prüfung und liefert bis zur Einführung des
+PostgreSQL-Adapters in Issue #4 eine dependency-freie Bereitschaft.
 
 ## Modulstruktur und Abhängigkeiten
 
@@ -76,9 +86,9 @@ app/composition-root ──▶ verdrahtet alle Module und den Lifecycle
 | `src/transport/http`       | HTTP-/JSON-Validierung und Übersetzung                                 | `application`, TypeBox, Fastify                        |
 | `src/app/composition-root` | Komposition, Abhängigkeiten und Lifecycle                              | alle konkreten Adapter und Application-Einstiegspunkte |
 
-`domain` bleibt von Fastify, TypeBox, Kysely, `pg`, `process.env`,
-Node-I/O sowie direktem Zugriff auf Systemzeit und Zufall getrennt. Verboten
-sind insbesondere `Date.now()`, `new Date()`, `Math.random()` und
+`domain` bleibt von Fastify, TypeBox, Kysely, `pg`, `process.env`, Node-I/O
+sowie direktem Zugriff auf Systemzeit und Zufall getrennt. Verboten sind
+insbesondere `Date.now()`, `new Date()`, `Math.random()` und
 `crypto.randomUUID()` im Domaincode. Zeit, IDs und Simulationszufall werden
 später über Ports injiziert; kryptografischer Zufall bleibt davon getrennt.
 
@@ -107,6 +117,7 @@ Die TypeScript-Compilergrenzen stehen in [`tsconfig.json`](tsconfig.json) und
 - [Verbindlicher Arbeitsworkflow](docs/WORKFLOW.md)
 - [Teststrategie](docs/TESTING.md)
 - [Quellcodedokumentation](docs/SOURCE-CODE.md)
+- [REST-Vertrag](docs/contracts/rest-api/galaxis-rest-v1.md)
 
 ## Lokale Prüfstruktur
 
