@@ -1,5 +1,8 @@
 # Datenbankadapter
 
+Die Accounttabelle und ihr Kysely-Repository gehören zu Issue #6;
+die zugehörige Migration ist `002-create-accounts.sql`.
+
 Dieser Bereich kapselt PostgreSQL, `pg`, Kysely und den Migrationszugriff.
 Datenbanktypen dürfen nicht in Domain- oder Applicationobjekte durchsickern.
 

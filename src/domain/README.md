@@ -1,5 +1,8 @@
 # Domain
 
+Die lokale Accountregistrierung verwendet [`accounts/account.ts`](accounts/account.ts)
+für ein normalisiertes, technikfreies Accountmodell.
+
 Die Domain kapselt später Fachmodelle, Invarianten und deterministische
 Berechnungen. Sie kennt weder Transport, Persistenz, Konfiguration noch
 Node.js-APIs. Zeit, IDs und Simulationszufall werden über Ports injiziert.
