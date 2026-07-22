@@ -4,3 +4,14 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Local backup and temporary copies.
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*~
+.backup/
+.tmp/
+tmp/

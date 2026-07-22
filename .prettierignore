@@ -4,3 +4,14 @@ dist/
 docs/
 node_modules/
 pnpm-lock.yaml
+
+# Local backup and temporary copies must not be formatted.
+**/*.bak
+**/*.backup
+**/*.old
+**/*.orig
+**/*.save
+**/*~
+**/.backup/
+**/.tmp/
+**/tmp/
