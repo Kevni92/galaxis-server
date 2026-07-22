@@ -1,5 +1,9 @@
 # Produktionsmodule
 
+Die Runtime-Ports und ihre technischen Adapter sind unter
+[`application/runtime`](application/runtime/README.md) und
+[`infrastructure/runtime`](infrastructure/runtime/README.md) dokumentiert.
+
 `src/` enthält ausschließlich serverseitigen TypeScript-Produktionscode. Die
 Abhängigkeitsrichtung verläuft von Transport über Application zur Domain;
 Infrastrukturadapter implementieren Ports und werden im Composition Root
