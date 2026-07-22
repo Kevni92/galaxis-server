@@ -4,7 +4,10 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-BAL-DATA-001
+## Status: A0 / GAL-QUALITY-CI-001
+
+Issue #11 vervollständigt die reproduzierbare lokale A0-Umgebung, das Linux-CI-
+Qualitätsgate und den vollständigen A0-Smoke-Ablauf.
 
 Issue #7 ergänzt gehashte Bearer-Sessions mit Ablauf, Widerruf und den drei
 Auth-Endpunkten für Anmeldung, Prüfung und Abmeldung.
@@ -14,6 +17,8 @@ und `POST /api/v1/auth/accounts` gemäß REST-Vertrag.
 
 Issue #9 ergänzt die versionierte A0-Balancing-Baseline mit strikter
 Validierung, tief unveränderlicher Konfiguration und kanonischem SHA-256-Hash.
+
+Issue #10 ergänzt OpenAPI-Contract-Tests gegen die freigegebene v1-Spezifikation.
 
 Issue #8 ergänzt injizierbare, deterministische Zeit-, Zufalls- und ID-Ports;
 Authentifizierungszufall bleibt davon getrennt.
@@ -86,8 +91,27 @@ pnpm start
 
 Der Server lauscht standardmäßig auf `127.0.0.1:3000`. `GET /health/live`
 prüft nur, ob der Prozess HTTP-Anfragen bedient. `GET /health/ready` verwendet
-eine injizierte Readiness-Prüfung und liefert bis zur Einführung des
-PostgreSQL-Adapters in Issue #4 eine dependency-freie Bereitschaft.
+eine injizierte Readiness-Prüfung und prüft bei gesetzter
+`GALAXIS_DATABASE_URL` die PostgreSQL-Bereitschaft.
+
+## A0-Smoke-Demo
+
+Nach einem frischen Checkout kann der vollständige A0-Ablauf mit PostgreSQL
+lokal ausgeführt werden:
+
+```powershell
+docker compose up -d postgres
+$env:GALAXIS_DATABASE_URL="postgres://galaxis:galaxis@127.0.0.1:5432/galaxis"
+$env:GALAXIS_PORT="3000"
+$env:GALAXIS_LOG_LEVEL="silent"
+pnpm db:migrate
+pnpm smoke:a0
+```
+
+Unter Bash/Zsh werden dieselben Befehle mit `export` statt PowerShell-
+Variablenzuweisungen ausgeführt. Der Smoke-Test startet den Server selbst und
+prüft Health, Registrierung, Login, Sessionprüfung, Logout und den abgewiesenen
+Zugriff nach dem Logout.
 
 ## Modulstruktur und Abhängigkeiten
 
@@ -129,7 +153,7 @@ die Auth-Routen sind unter `src/transport/http/` navigierbar.
   - [`infrastructure`](src/infrastructure/README.md)
   - [`transport/http`](src/transport/http/README.md)
 - [`tests/`](tests/README.md) – Unit-, Integrations-, Contract- und Fixture-Struktur
-- [`migrations/`](migrations/README.md) – reserviert für spätere versionierte SQL-Migrationen
+- [`migrations/`](migrations/README.md) – versionierte SQL-Migrationen für die A0-Datenbank
 - [`scripts/`](scripts/README.md) – technische Prüf- und Werkzeugskripte
 
 ## Maßgebliche Quellen
@@ -150,14 +174,18 @@ Die folgenden pnpm-Ziele sind im Root-Manifest definiert:
 pnpm format:check
 pnpm lint
 pnpm typecheck
+pnpm test:unit
 pnpm test
 pnpm test:integration
 pnpm test:contract
 pnpm build
 pnpm architecture:check
+pnpm smoke:a0
 ```
 
-`test:contract` akzeptiert bis zur Einführung der jeweiligen Module bewusst
-leere Testbereiche. `test:integration` enthält PostgreSQL-Tests und überspringt
-den Container nur, wenn Docker nicht verfügbar ist. `architecture:check` führt sowohl
-die direkte Boundary-Prüfung als auch `dependency-cruiser` aus.
+`test:contract` prüft die OpenAPI-Struktur, TypeBox-Schemas und den A0-REST-
+Ablauf. `test:integration` und `test:contract` verwenden PostgreSQL-
+Testcontainer und überspringen datenbankabhängige Tests nur, wenn Docker nicht
+verfügbar ist. `architecture:check` führt sowohl die direkte Boundary-Prüfung
+als auch `dependency-cruiser` aus. Der CI-Workflow verwendet dieselben pnpm-
+Skripte wie die lokale Umgebung.

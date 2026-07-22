@@ -7,6 +7,7 @@ dürfen Node.js-I/O verwenden. Sie definieren keine Serverfachlogik.
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | [`check-architecture.mjs`](check-architecture.mjs)      | Prüft Domaincode auf verbotene technische Imports sowie direkten Zeit-/Zufallszugriff     |
 | [`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs) | Prüft Importzyklen und Schicht-/Paketgrenzen, sobald `dependency-cruiser` installiert ist |
+| [`smoke-a0.ts`](smoke-a0.ts)                            | Führt den vollständigen A0-HTTP-Ablauf gegen PostgreSQL aus                               |
 
 Die ausführbaren Einstiegspunkte sind im Root-`package.json` als pnpm-Skripte
 definiert. Datenbankmigrationen werden über `pnpm db:migrate` angewendet und
