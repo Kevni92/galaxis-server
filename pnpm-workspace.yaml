@@ -1,8 +1,8 @@
 allowBuilds:
   argon2: true
-  cpu-features: true
+  cpu-features: false
   esbuild: true
   protobufjs: true
-  ssh2: true
+  ssh2: false
 minimumReleaseAgeExclude:
   - argon2@0.45.1
