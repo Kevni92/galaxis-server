@@ -1,5 +1,6 @@
 # Unit-Tests
 
 Unit-Tests prüfen später isolierte Domain- und Applicationlogik mit
-injizierten Zeit-, ID- und Zufallsports. Es gibt in Issue #1 noch keine
-produktiven Einheiten zu testen.
+injizierten Zeit-, ID- und Zufallsports. `smoke.test.ts` prüft aktuell nur den
+leeren Fastify-Bootstrap; `architecture-boundaries.test.ts` verifiziert die
+Architektur-Fixture.
