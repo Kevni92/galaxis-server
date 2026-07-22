@@ -12,6 +12,9 @@ Validierung, tief unveränderlicher Konfiguration und kanonischem SHA-256-Hash.
 Issue #8 ergänzt injizierbare, deterministische Zeit-, Zufalls- und ID-Ports;
 Authentifizierungszufall bleibt davon getrennt.
 
+Issue #5 ergänzt den Fastify-REST-Kern mit TypeBox-Laufzeitvalidierung,
+Korrelations-ID, sicheren Fehlerantworten sowie konfigurierbaren HTTP-Grenzen.
+
 Issue #3 ergänzt die baubare Basis um strikt validierte Runtime-Konfiguration,
 strukturiertes Pino-Logging, technische Health-Endpunkte und einen kontrollierten
 Shutdown-Lifecycle. Es gibt weiterhin keine Datenbanktabellen,

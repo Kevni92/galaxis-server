@@ -1,3 +1,6 @@
+// Feature: GAL-API-CORE-001
+// REST-Vertrag: docs/contracts/rest-api/galaxis-rest-v1.yaml
+
 import { Type } from "@sinclair/typebox";
 import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import type {
@@ -7,6 +10,7 @@ import type {
 } from "fastify/types/utils.js";
 
 import type { ReadinessProbe } from "../../application/health/readiness.js";
+import { errorResponseSchema } from "./error-handler.js";
 
 const liveResponse = Type.Object({
   status: Type.Literal("ok"),
@@ -30,14 +34,37 @@ export function registerHealthRoutes<Logger extends FastifyBaseLogger>(
   >,
   readinessProbe: ReadinessProbe,
 ): void {
-  server.get("/health/live", { schema: { response: { 200: liveResponse } } }, async (request) => {
-    request.log.info({ component: "health", correlationId: request.id }, "liveness check");
-    return { status: "ok", correlationId: request.id };
-  });
+  server.get(
+    "/health/live",
+    {
+      schema: {
+        response: {
+          200: liveResponse,
+          400: errorResponseSchema,
+          415: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    async (request) => {
+      request.log.info({ component: "health", correlationId: request.id }, "liveness check");
+      return { status: "ok", correlationId: request.id };
+    },
+  );
 
   server.get(
     "/health/ready",
-    { schema: { response: { 200: readyResponse, 503: notReadyResponse } } },
+    {
+      schema: {
+        response: {
+          200: readyResponse,
+          400: errorResponseSchema,
+          415: errorResponseSchema,
+          500: errorResponseSchema,
+          503: notReadyResponse,
+        },
+      },
+    },
     async (request, reply) => {
       let result: Awaited<ReturnType<ReadinessProbe["check"]>>;
       try {

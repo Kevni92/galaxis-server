@@ -17,6 +17,9 @@ export const runtimeConfigSchema = Type.Object({
   logLevel: Type.Union(logLevels),
   serviceName: Type.String({ minLength: 1 }),
   shutdownTimeoutMs: Type.Integer({ minimum: 1, maximum: 60000 }),
+  maxBodyBytes: Type.Integer({ minimum: 1, maximum: 10485760 }),
+  requestTimeoutMs: Type.Integer({ minimum: 1, maximum: 120000 }),
+  connectionTimeoutMs: Type.Integer({ minimum: 1, maximum: 120000 }),
   databaseUrl: Type.Optional(Type.String({ minLength: 1 })),
 });
 
@@ -49,6 +52,9 @@ function configurationCandidate(environment: Environment): Record<string, unknow
     logLevel: environment.GALAXIS_LOG_LEVEL,
     serviceName: environment.GALAXIS_SERVICE_NAME ?? "galaxis-server",
     shutdownTimeoutMs: parseInteger(environment.GALAXIS_SHUTDOWN_TIMEOUT_MS, 10000),
+    maxBodyBytes: parseInteger(environment.GALAXIS_MAX_BODY_BYTES, 1048576),
+    requestTimeoutMs: parseInteger(environment.GALAXIS_REQUEST_TIMEOUT_MS, 30000),
+    connectionTimeoutMs: parseInteger(environment.GALAXIS_CONNECTION_TIMEOUT_MS, 30000),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
   };
 }
