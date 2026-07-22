@@ -25,6 +25,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Make pinned pnpm available for cache setup
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+          run_install: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
