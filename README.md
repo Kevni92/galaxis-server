@@ -4,7 +4,10 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-PLATFORM-RUNTIME-001
+## Status: A0 / GAL-SIM-RUNTIME-001
+
+Issue #8 ergänzt injizierbare, deterministische Zeit-, Zufalls- und ID-Ports;
+Authentifizierungszufall bleibt davon getrennt.
 
 Issue #3 ergänzt die baubare Basis um strikt validierte Runtime-Konfiguration,
 strukturiertes Pino-Logging, technische Health-Endpunkte und einen kontrollierten

@@ -1,5 +1,8 @@
 # Application
 
+Die injizierbaren Runtime-Ports liegen unter [`runtime/`](runtime/README.md)
+und trennen Wall-/Kampagnenzeit, Simulationszufall, Kryptozufall und IDs.
+
 Die Application-Schicht orchestriert Anwendungsfälle, Ports und
 Transaktionsgrenzen. Sie übersetzt keine HTTP-Details und enthält kein SQL.
 

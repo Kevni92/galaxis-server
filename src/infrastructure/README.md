@@ -1,5 +1,8 @@
 # Infrastructure
 
+Die Runtime-Adapter unter [`runtime/`](runtime/README.md) sind die einzige
+Stelle für Systemzeit und Node-Kryptografie.
+
 Infrastrukturadapter kapseln technische Bibliotheken und externe Systeme.
 Sie implementieren Ports aus Application oder Domain und definieren keine
 neuen Spielregeln.
