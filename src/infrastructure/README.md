@@ -11,6 +11,6 @@ neuen Spielregeln.
 | ----------- | ------------------------------------------------------ | ---------------------------------- |
 | `balancing` | versionierte Validierung und kanonischer Hash          | [`README.md`](balancing/README.md) |
 | `config`    | validierte Laufzeitkonfiguration                       | [`README.md`](config/README.md)    |
-| `database`  | PostgreSQL, Kysely und Migrationen                     | [`README.md`](database/README.md)  |
+| `database`  | PostgreSQL-Pool, Kysely und transaktionale Migrationen | [`README.md`](database/README.md)  |
 | `logging`   | Pino-Adapter                                           | [`README.md`](logging/README.md)   |
 | `runtime`   | Produktions- und Fake-Adapter für Zeit, Zufall und IDs | [`README.md`](runtime/README.md)   |

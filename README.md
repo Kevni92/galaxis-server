@@ -53,10 +53,15 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-Docker Desktop beziehungsweise Docker Engine ist für diese repositoryweite
-Basis noch nicht erforderlich. Die Installation kann mit
-`docker compose version` geprüft werden; der PostgreSQL-Compose-Stack gehört
-zu Issue #4.
+Docker Desktop beziehungsweise Docker Engine wird für die lokale
+PostgreSQL-Instanz benötigt und kann mit `docker compose version` geprüft
+werden. Start und Migration erfolgen über:
+
+```powershell
+docker compose up -d postgres
+pnpm db:migrate
+pnpm db:migrate:check
+```
 
 Lokaler Start und Produktionsbuild. `GALAXIS_PORT` und `GALAXIS_LOG_LEVEL`
 sind Pflichtwerte; weitere Werte stehen in [`.env.example`](.env.example):
@@ -143,6 +148,7 @@ pnpm build
 pnpm architecture:check
 ```
 
-`test:integration` und `test:contract` akzeptieren bis zur Einführung der
-jeweiligen Module bewusst leere Testbereiche. `architecture:check` führt sowohl
+`test:contract` akzeptiert bis zur Einführung der jeweiligen Module bewusst
+leere Testbereiche. `test:integration` enthält PostgreSQL-Tests und überspringt
+den Container nur, wenn Docker nicht verfügbar ist. `architecture:check` führt sowohl
 die direkte Boundary-Prüfung als auch `dependency-cruiser` aus.

@@ -3,6 +3,7 @@
 `rest-core.test.ts` prüft den Fastify-HTTP-Adapter isoliert mit
 `Fastify.inject()`.
 
-Integrationstests prüfen später das Zusammenspiel von Servermodulen,
-PostgreSQL, Persistenz und Migrationen. Testcontainers ist dafür der
-festgelegte Adapter, sofern Docker verfügbar ist.
+`database.test.ts` prüft Pool, Migrationen und Transaktionsgrenzen gegen
+PostgreSQL in einem Testcontainers-Container. Der Test wird nur übersprungen,
+wenn Docker in der lokalen Umgebung nicht verfügbar ist; CI soll Docker
+bereitstellen.

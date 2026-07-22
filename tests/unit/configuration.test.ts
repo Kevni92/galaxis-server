@@ -13,6 +13,8 @@ describe("runtime configuration", () => {
 
     expect(config.port).toBe(3001);
     expect(config.logLevel).toBe("debug");
+    expect(config.databasePoolMax).toBe(10);
+    expect(config.databaseConnectionTimeoutMs).toBe(5000);
     expect(Object.isFrozen(config)).toBe(true);
   });
 
