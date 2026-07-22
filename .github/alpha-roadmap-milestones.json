@@ -1,0 +1,54 @@
+[
+  {
+    "number": 1,
+    "title": "A0 – Technisches Fundament"
+  },
+  {
+    "number": 2,
+    "title": "A1 – Heimatplanet"
+  },
+  {
+    "number": 3,
+    "title": "A2 – Schiffe und lokales Sternensystem"
+  },
+  {
+    "number": 4,
+    "title": "A3 – Interstellare Erkundung"
+  },
+  {
+    "number": 5,
+    "title": "A4 – Zweite Kolonie"
+  },
+  {
+    "number": 6,
+    "title": "A5 – Bevölkerung und Arbeit"
+  },
+  {
+    "number": 7,
+    "title": "A6 – Wirtschaft, Gebäude und Versorgung"
+  },
+  {
+    "number": 8,
+    "title": "A7 – Forschung und Technologien"
+  },
+  {
+    "number": 9,
+    "title": "A8 – Flottenlogistik und Reparatur"
+  },
+  {
+    "number": 10,
+    "title": "A9 – Andere Reiche und Erstkontakt"
+  },
+  {
+    "number": 11,
+    "title": "A10 – Diplomatie und Handel"
+  },
+  {
+    "number": 12,
+    "title": "A11 – Konflikt und Raumkampf"
+  },
+  {
+    "number": 13,
+    "title": "A12 – Ereignisse, Krise und Kampagnenabschluss"
+  }
+]
