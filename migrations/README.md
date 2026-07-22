@@ -1,5 +1,8 @@
 # Datenbankmigrationen
 
+`003-create-sessions.sql` legt Session-ID, Accountbezug, Tokenhash, Ablauf,
+`last_used_at` und Widerrufszeitpunkt an.
+
 `002-create-accounts.sql` legt die lokale Accounttabelle mit stabilem,
 öffentlichem Identifier und gespeichertem Argon2id-Hash an.
 

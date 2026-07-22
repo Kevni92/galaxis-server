@@ -1,5 +1,8 @@
 # HTTP-Transport
 
+[`session-routes.ts`](session-routes.ts) registriert die drei Bearer-Sessionrouten;
+[`auth-hook.ts`](auth-hook.ts) stellt bestätigte Identität für geschützte Routen bereit.
+
 [`auth-routes.ts`](auth-routes.ts) registriert `POST /api/v1/auth/accounts`
 gemäß [`galaxis-rest-v1.yaml`](../../../docs/contracts/rest-api/galaxis-rest-v1.yaml).
 

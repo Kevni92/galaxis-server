@@ -1,5 +1,8 @@
 # Composition Root
 
+`application.ts` verdrahtet zusätzlich Accountregistrierung und Bearer-Sessionservice
+nur bei konfigurierter PostgreSQL-Infrastruktur.
+
 Beim Start lädt der Composition Root die validierte A0-Balancingkonfiguration
 vor dem HTTP-Listener und protokolliert Version, Katalogversion und Hash.
 Wenn `GALAXIS_DATABASE_URL` gesetzt ist, werden PostgreSQL-Readiness und

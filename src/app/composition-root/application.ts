@@ -2,6 +2,7 @@ import type { Logger } from "pino";
 import { fileURLToPath } from "node:url";
 
 import { AccountRegistrationService } from "../../application/accounts/registration.js";
+import { SessionService } from "../../application/sessions/service.js";
 import type {
   BalancingLoader,
   LoadedBalancingConfiguration,
@@ -9,7 +10,12 @@ import type {
 import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
 import { KyselyAccountRepository } from "../../infrastructure/accounts/repository.js";
-import { Argon2PasswordHasher } from "../../infrastructure/accounts/password-hasher.js";
+import {
+  Argon2PasswordHasher,
+  DUMMY_PASSWORD_HASH,
+} from "../../infrastructure/accounts/password-hasher.js";
+import { KyselySessionRepository } from "../../infrastructure/sessions/repository.js";
+import { OpaqueSessionTokenGenerator } from "../../infrastructure/sessions/token-generator.js";
 import type { RuntimeConfig } from "../../infrastructure/config/config.js";
 import {
   createPostgresDatabase,
@@ -32,6 +38,7 @@ export interface ApplicationDependencies {
   readonly balancingLoader?: BalancingLoader;
   readonly database?: PostgresDatabase;
   readonly accountRegistration?: Pick<AccountRegistrationService, "register">;
+  readonly sessionService?: Pick<SessionService, "create" | "current" | "revoke" | "authenticate">;
   readonly resources?: readonly ShutdownResource[];
 }
 
@@ -88,10 +95,25 @@ export function createApplication(
           idGenerator: new PrefixedIdGenerator(new NodeCryptographicRandomSource()),
           wallClock: new SystemWallClock(),
         }));
+  const sessionService =
+    dependencies.sessionService ??
+    (database === undefined
+      ? undefined
+      : new SessionService({
+          accountReader: new KyselyAccountRepository(database.db),
+          passwordHasher: new Argon2PasswordHasher(),
+          sessionRepository: new KyselySessionRepository(database.db),
+          tokenGenerator: new OpaqueSessionTokenGenerator(new NodeCryptographicRandomSource()),
+          idGenerator: new PrefixedIdGenerator(new NodeCryptographicRandomSource()),
+          wallClock: new SystemWallClock(),
+          sessionLifetimeMs: config.sessionLifetimeMs,
+          dummyPasswordHash: DUMMY_PASSWORD_HASH,
+        }));
   const serverDependencies: ServerDependencies = {
     logger,
     ...(readinessProbe === undefined ? {} : { readinessProbe }),
     ...(accountRegistration === undefined ? {} : { accountRegistration }),
+    ...(sessionService === undefined ? {} : { sessionService }),
   };
   const server = createServer(config, serverDependencies);
   let started = false;

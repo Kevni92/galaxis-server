@@ -1,5 +1,8 @@
 # Unit-Tests
 
+`sessions.test.ts` und `session-token.test.ts` prüfen Ablauf, Widerruf,
+Dummy-Hashing und opake Token deterministisch mit Fakes.
+
 `balancing.test.ts` prüft Schema, Referenzen, Unveränderlichkeit, Golden-Hash
 und den Dateisystem-Loader für die A0-Baseline.
 

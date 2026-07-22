@@ -1,5 +1,8 @@
 # Application
 
+[`sessions/service.ts`](sessions/service.ts) orchestriert Anmeldung, Sessionprüfung
+und Widerruf über getrennte Persistenz-, Token-, Zeit- und Rate-Limit-Ports.
+
 Die lokale Registrierung liegt in [`accounts/registration.ts`](accounts/registration.ts)
 und verwendet die injizierbaren Ports aus [`accounts/ports.ts`](accounts/ports.ts).
 

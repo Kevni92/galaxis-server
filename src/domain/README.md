@@ -1,5 +1,8 @@
 # Domain
 
+[`sessions/session.ts`](sessions/session.ts) beschreibt den technikneutralen
+Sessionzustand ohne Token- oder Datenbankimplementierung.
+
 Die lokale Accountregistrierung verwendet [`accounts/account.ts`](accounts/account.ts)
 für ein normalisiertes, technikfreies Accountmodell.
 

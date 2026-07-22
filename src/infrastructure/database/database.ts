@@ -14,8 +14,20 @@ export interface AccountTable {
   created_at: Date;
 }
 
+export interface SessionTable {
+  id: Generated<number>;
+  session_id: string;
+  account_id: string;
+  token_hash: string;
+  created_at: Date;
+  expires_at: Date;
+  last_used_at: Date | null;
+  revoked_at: Date | null;
+}
+
 export interface DatabaseSchema {
   accounts: AccountTable;
+  sessions: SessionTable;
 }
 
 export interface PostgresDatabase {
