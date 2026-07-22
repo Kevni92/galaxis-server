@@ -12,17 +12,17 @@ import type {
 import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { errorResponseSchema } from "./error-handler.js";
 
-const liveResponse = Type.Object({
+export const liveResponse = Type.Object({
   status: Type.Literal("ok"),
-  correlationId: Type.String(),
+  correlationId: Type.String({ minLength: 1 }),
 });
-const readyResponse = Type.Object({
+export const readyResponse = Type.Object({
   status: Type.Literal("ready"),
-  correlationId: Type.String(),
+  correlationId: Type.String({ minLength: 1 }),
 });
-const notReadyResponse = Type.Object({
+export const notReadyResponse = Type.Object({
   status: Type.Literal("not_ready"),
-  correlationId: Type.String(),
+  correlationId: Type.String({ minLength: 1 }),
 });
 
 export function registerHealthRoutes<Logger extends FastifyBaseLogger>(

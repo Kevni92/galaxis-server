@@ -1,14 +1,14 @@
 # Tests
 
-Tests bleiben deterministisch und risikobasiert. Unit-Tests benötigen keine
+Tests bleiben deterministisch und risikobasiert. Unit-Tests benoetigen keine
 echte Datenbank und keinen laufenden Webserver; Integrations- und
-Contract-Tests werden erst mit den jeweiligen technischen Modulen ergänzt.
+Contract-Tests verwenden ihre jeweils dokumentierte technische Umgebung.
 
-| Bereich       | Zweck                                                                         | Einstieg                             |
-| ------------- | ----------------------------------------------------------------------------- | ------------------------------------ |
-| `unit`        | Konfiguration, Logging, Health, Shutdown und spätere Domain-/Applicationlogik | [`README.md`](unit/README.md)        |
-| `integration` | REST-Adapter und später einschließlich PostgreSQL                             | [`README.md`](integration/README.md) |
-| `contract`    | Prüfung gegen freigegebene REST-Verträge                                      | [`README.md`](contract/README.md)    |
-| `fixtures`    | kontrollierte Testdaten und feste Seeds                                       | [`README.md`](fixtures/README.md)    |
+| Bereich       | Zweck                                                                    | Einstieg                             |
+| ------------- | ------------------------------------------------------------------------ | ------------------------------------ |
+| `unit`        | Konfiguration, Logging, Health, Shutdown und Applicationlogik            | [`README.md`](unit/README.md)        |
+| `integration` | REST-Adapter und PostgreSQL-Adapter                                      | [`README.md`](integration/README.md) |
+| `contract`    | OpenAPI-Struktur, TypeBox-Abgleich und A0-REST-Ablaufe gegen den Vertrag | [`README.md`](contract/README.md)    |
+| `fixtures`    | kontrollierte Testdaten, feste Seeds und gemeinsame Testpfade            | [`README.md`](fixtures/README.md)    |
 
 Die Teststufen folgen [`docs/TESTING.md`](../docs/TESTING.md).
