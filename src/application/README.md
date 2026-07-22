@@ -1,5 +1,8 @@
 # Application
 
+Der Balancing-Port liegt unter [`balancing/`](balancing/README.md) und liefert
+eine validierte, tief unveränderliche Konfiguration ohne Node-I/O-Typen.
+
 Die injizierbaren Runtime-Ports liegen unter [`runtime/`](runtime/README.md)
 und trennen Wall-/Kampagnenzeit, Simulationszufall, Kryptozufall und IDs.
 

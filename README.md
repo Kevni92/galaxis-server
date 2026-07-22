@@ -4,7 +4,10 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-SIM-RUNTIME-001
+## Status: A0 / GAL-BAL-DATA-001
+
+Issue #9 ergänzt die versionierte A0-Balancing-Baseline mit strikter
+Validierung, tief unveränderlicher Konfiguration und kanonischem SHA-256-Hash.
 
 Issue #8 ergänzt injizierbare, deterministische Zeit-, Zufalls- und ID-Ports;
 Authentifizierungszufall bleibt davon getrennt.

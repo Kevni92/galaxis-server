@@ -1,5 +1,8 @@
 # Composition Root
 
+Beim Start lädt der Composition Root die validierte A0-Balancingkonfiguration
+vor dem HTTP-Listener und protokolliert Version, Katalogversion und Hash.
+
 Der Composition Root erstellt konkrete Adapter, injiziert Ports und steuert
 den Anwendungs-Lifecycle. Er enthält keine Fachlogik und wird von keinem
 inneren Modul importiert.
