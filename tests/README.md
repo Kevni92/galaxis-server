@@ -7,7 +7,7 @@ Contract-Tests werden erst mit den jeweiligen technischen Modulen ergänzt.
 | Bereich       | Zweck                                                                         | Einstieg                             |
 | ------------- | ----------------------------------------------------------------------------- | ------------------------------------ |
 | `unit`        | Konfiguration, Logging, Health, Shutdown und spätere Domain-/Applicationlogik | [`README.md`](unit/README.md)        |
-| `integration` | echtes Zusammenspiel, später einschließlich PostgreSQL                        | [`README.md`](integration/README.md) |
+| `integration` | REST-Adapter und später einschließlich PostgreSQL                             | [`README.md`](integration/README.md) |
 | `contract`    | Prüfung gegen freigegebene REST-Verträge                                      | [`README.md`](contract/README.md)    |
 | `fixtures`    | kontrollierte Testdaten und feste Seeds                                       | [`README.md`](fixtures/README.md)    |
 

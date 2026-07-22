@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 import type { Logger } from "pino";
 
@@ -9,6 +10,7 @@ import {
 } from "../../application/health/readiness.js";
 import type { RuntimeConfig } from "../../infrastructure/config/config.js";
 import { createLogger } from "../../infrastructure/logging/logger.js";
+import { registerErrorHandling } from "../../transport/http/error-handler.js";
 import { registerHealthRoutes } from "../../transport/http/health-routes.js";
 
 export interface ServerDependencies {
@@ -32,8 +34,12 @@ export function createServer(config: RuntimeConfig, dependencies: ServerDependen
     loggerInstance: logger,
     requestIdHeader: "x-correlation-id",
     genReqId: correlationId,
-  });
+    bodyLimit: config.maxBodyBytes,
+    requestTimeout: config.requestTimeoutMs,
+    connectionTimeout: config.connectionTimeoutMs,
+  }).withTypeProvider<TypeBoxTypeProvider>();
 
+  registerErrorHandling(server);
   server.addHook("onRequest", async (request) => {
     request.log.info({ component: "http", correlationId: request.id }, "request received");
   });

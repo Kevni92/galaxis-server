@@ -8,6 +8,9 @@ export function redactedConfig(config: RuntimeConfig): {
   logLevel: RuntimeConfig["logLevel"];
   serviceName: string;
   shutdownTimeoutMs: number;
+  maxBodyBytes: number;
+  requestTimeoutMs: number;
+  connectionTimeoutMs: number;
 } {
   return {
     host: config.host,
@@ -15,6 +18,9 @@ export function redactedConfig(config: RuntimeConfig): {
     logLevel: config.logLevel,
     serviceName: config.serviceName,
     shutdownTimeoutMs: config.shutdownTimeoutMs,
+    maxBodyBytes: config.maxBodyBytes,
+    requestTimeoutMs: config.requestTimeoutMs,
+    connectionTimeoutMs: config.connectionTimeoutMs,
   };
 }
 
