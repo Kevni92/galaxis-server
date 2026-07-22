@@ -1,0 +1,65 @@
+name: Bootstrap alpha roadmap metadata
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/bootstrap-alpha-roadmap.yml
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const milestones = [
+              ['A0 – Technisches Fundament', 'Startfähige Plattform mit Datenbank, REST-Kern, Authentifizierung, deterministischer Laufzeit, Balancing-Loader und CI.'],
+              ['A1 – Heimatplanet', 'Ein neuer Spieler kann eine Kampagne starten und sein Reich mit kolonisiertem Heimatplaneten laden und ansehen.'],
+              ['A2 – Schiffe und lokales Sternensystem', 'Ein Erkundungsschiff existiert und kann innerhalb des bekannten Heimatsternsystems bewegt werden.'],
+              ['A3 – Interstellare Erkundung', 'Ein Erkundungsschiff kann ein unbekanntes Nachbarsystem bereisen und reichsspezifisch aufdecken.'],
+              ['A4 – Zweite Kolonie', 'Der Spieler kann einen geeigneten zweiten Himmelskörper auswählen, kolonisieren und als neue Kolonie verwalten.'],
+              ['A5 – Bevölkerung und Arbeit', 'Bevölkerung, Qualifikation, Beschäftigung, Migration und Prioritäten bilden einen spielbaren Kreislauf.'],
+              ['A6 – Wirtschaft, Gebäude und Versorgung', 'Gebäude, Güter, Produktion, Lager, Transport, Bedürfnisse und Haushalt bilden einen stabilen Wirtschaftskreislauf.'],
+              ['A7 – Forschung und Technologien', 'Forschung erzeugt Fortschritt, schließt Technologien ab und schaltet nachvollziehbare Fähigkeiten frei.'],
+              ['A8 – Flottenlogistik und Reparatur', 'Mehrere Flotten können versorgt, aufgeteilt, repariert und über Reichweite und Logistik begrenzt eingesetzt werden.'],
+              ['A9 – Andere Reiche und Erstkontakt', 'Andere Reiche werden entdeckt, erhalten getrennte Wissensstände und lösen einen nachvollziehbaren Erstkontakt aus.'],
+              ['A10 – Diplomatie und Handel', 'Beziehungen, Angebote, Verträge und Handel ermöglichen friedliche strategische Interaktion.'],
+              ['A11 – Konflikt und Raumkampf', 'Kriegserklärung, Flottenbegegnung, Rückzug, Schäden und begrenzter Frieden bilden einen vollständigen Konfliktablauf.'],
+              ['A12 – Ereignisse, Krise und Kampagnenabschluss', 'Ereignisse, galaktische Krise, Siegespfade und Abschlussbericht beenden eine vollständige Alpha-Kampagne.']
+            ];
+            const existing = await github.paginate(github.rest.issues.listMilestones, { owner, repo, state: 'all', per_page: 100 });
+            const result = [];
+            for (const [title, description] of milestones) {
+              let milestone = existing.find(item => item.title === title);
+              if (!milestone) milestone = (await github.rest.issues.createMilestone({ owner, repo, title, description, state: 'open' })).data;
+              else if (milestone.description !== description || milestone.state !== 'open') milestone = (await github.rest.issues.updateMilestone({ owner, repo, milestone_number: milestone.number, description, state: 'open' })).data;
+              result.push({ number: milestone.number, title: milestone.title });
+            }
+            const labels = [
+              ['roadmap', '0E8A16', 'Projektübergreifende Implementierungsroadmap'],
+              ['alpha', '1D76DB', 'Teil einer spielbaren Alpha-Stufe'],
+              ['server', 'B60205', 'Serverseitige Umsetzung'],
+              ['codex-ready', '0052CC', 'Ausreichend konkret für lokale Codex-Umsetzung'],
+              ['vertical-slice', 'FBCA04', 'Spielbarer End-to-End-Schnitt'],
+              ['infrastructure', 'BFDADC', 'Build, Laufzeit, Datenbank, Konfiguration oder CI'],
+              ['authentication', 'D4C5F9', 'Accounts, Registrierung, Anmeldung und Sessions'],
+              ['database', 'C5DEF5', 'Persistenz, PostgreSQL und Migrationen'],
+              ['api', 'C2E0C6', 'REST- oder OpenAPI-Vertrag und Implementierung'],
+              ['simulation', '5319E7', 'Deterministische Simulation und Szenarien'],
+              ['balancing', '0E8A16', 'Balancingdaten, Formeln und Kalibrierung']
+            ];
+            for (const [name, color, description] of labels) {
+              try { await github.rest.issues.getLabel({ owner, repo, name }); await github.rest.issues.updateLabel({ owner, repo, name, color, description }); }
+              catch (error) { if (error.status !== 404) throw error; await github.rest.issues.createLabel({ owner, repo, name, color, description }); }
+            }
+            const path = '.github/alpha-roadmap-milestones.json';
+            let sha;
+            try { sha = (await github.rest.repos.getContent({ owner, repo, path, ref: 'main' })).data.sha; } catch (error) { if (error.status !== 404) throw error; }
+            await github.rest.repos.createOrUpdateFileContents({ owner, repo, path, branch: 'main', sha, message: 'chore: record alpha roadmap milestones', content: Buffer.from(JSON.stringify(result, null, 2) + '\n').toString('base64') });
