@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "balancingVersion": "0.1.0-baseline",
+  "catalogVersion": "0.1.0-baseline",
+  "status": "baseline",
+  "effectiveFrom": "new_campaigns",
+  "sources": [
+    "docs/balancing/data-format.md",
+    "docs/decisions/0004-versionierte-balancing-schicht.md"
+  ],
+  "units": ["campaign_seconds", "campaign_days", "probability_ppm"],
+  "parameters": {}
+}

@@ -1,6 +1,12 @@
 import type { Logger } from "pino";
+import { fileURLToPath } from "node:url";
 
+import type {
+  BalancingLoader,
+  LoadedBalancingConfiguration,
+} from "../../application/balancing/loader.js";
 import type { ReadinessProbe } from "../../application/health/readiness.js";
+import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
 import type { RuntimeConfig } from "../../infrastructure/config/config.js";
 import { createLogger, redactedConfig } from "../../infrastructure/logging/logger.js";
 import { createServer, type ServerDependencies } from "./server.js";
@@ -12,12 +18,14 @@ export interface ShutdownResource {
 export interface ApplicationDependencies {
   readonly logger?: Logger;
   readonly readinessProbe?: ReadinessProbe;
+  readonly balancingLoader?: BalancingLoader;
   readonly resources?: readonly ShutdownResource[];
 }
 
 export interface ServerApplication {
   readonly logger: Logger;
   readonly server: ReturnType<typeof createServer>;
+  readonly balancingConfiguration: LoadedBalancingConfiguration | undefined;
   start(): Promise<void>;
   shutdown(reason?: string): Promise<void>;
 }
@@ -41,6 +49,11 @@ export function createApplication(
 ): ServerApplication {
   const logger = dependencies.logger ?? createLogger(config);
   const resources = dependencies.resources ?? [];
+  const balancingLoader =
+    dependencies.balancingLoader ??
+    new FileSystemBalancingLoader(
+      fileURLToPath(new URL("../../../data/balancing/manifest.json", import.meta.url)),
+    );
   const serverDependencies: ServerDependencies =
     dependencies.readinessProbe === undefined
       ? { logger }
@@ -48,6 +61,7 @@ export function createApplication(
   const server = createServer(config, serverDependencies);
   let started = false;
   let shutdownPromise: Promise<void> | undefined;
+  let balancingConfiguration: LoadedBalancingConfiguration | undefined;
 
   logger.info(
     { component: "configuration", config: redactedConfig(config) },
@@ -57,6 +71,16 @@ export function createApplication(
   const start = async (): Promise<void> => {
     if (started) return;
 
+    balancingConfiguration = await balancingLoader.load();
+    logger.info(
+      {
+        component: "balancing",
+        balancingVersion: balancingConfiguration.balancingVersion,
+        catalogVersion: balancingConfiguration.catalogVersion,
+        balancingHash: balancingConfiguration.hash,
+      },
+      "balancing configuration loaded",
+    );
     await server.listen({ host: config.host, port: config.port });
     started = true;
     logger.info({ component: "lifecycle", host: config.host, port: config.port }, "server started");
@@ -93,5 +117,13 @@ export function createApplication(
     return shutdownPromise;
   };
 
-  return { logger, server, start, shutdown };
+  return {
+    logger,
+    server,
+    get balancingConfiguration() {
+      return balancingConfiguration;
+    },
+    start,
+    shutdown,
+  };
 }

@@ -1,5 +1,8 @@
 # Unit-Tests
 
+`balancing.test.ts` prüft Schema, Referenzen, Unveränderlichkeit, Golden-Hash
+und den Dateisystem-Loader für die A0-Baseline.
+
 `runtime.test.ts` prüft deterministische Zeit-, Zufalls- und ID-Provider;
 `architecture-boundaries.test.ts` verifiziert zusätzlich direkte
 Systemzugriffe in der Domain-Fixture.

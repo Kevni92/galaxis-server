@@ -1,5 +1,9 @@
 # Produktionsmodule
 
+Die Balancing-Ports und -Adapter sind unter
+[`application/balancing`](application/balancing/README.md) und
+[`infrastructure/balancing`](infrastructure/balancing/README.md) dokumentiert.
+
 Die Runtime-Ports und ihre technischen Adapter sind unter
 [`application/runtime`](application/runtime/README.md) und
 [`infrastructure/runtime`](infrastructure/runtime/README.md) dokumentiert.
