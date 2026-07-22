@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality and A0 smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository and docs
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable Corepack and install pinned pnpm
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Architecture check
+        run: pnpm architecture:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit -- --reporter=default --reporter=junit --outputFile=test-results/unit.xml
+
+      - name: Integration tests
+        run: pnpm test:integration -- --reporter=default --reporter=junit --outputFile=test-results/integration.xml
+
+      - name: Contract tests
+        run: pnpm test:contract -- --reporter=default --reporter=junit --outputFile=test-results/contract.xml
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start PostgreSQL
+        run: docker compose up -d --wait postgres
+
+      - name: Apply migrations
+        run: pnpm db:migrate
+        env:
+          GALAXIS_PORT: "3000"
+          GALAXIS_LOG_LEVEL: silent
+          GALAXIS_DATABASE_URL: postgres://galaxis:galaxis@127.0.0.1:5432/galaxis
+
+      - name: Run A0 smoke test
+        run: pnpm smoke:a0
+        env:
+          GALAXIS_DATABASE_URL: postgres://galaxis:galaxis@127.0.0.1:5432/galaxis
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose down -v

@@ -19,10 +19,12 @@
     "lint": "eslint .",
     "start": "node dist/app/composition-root/main.js",
     "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
     "test:contract": "vitest run tests/contract",
     "test:integration": "vitest run --passWithNoTests tests/integration",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "smoke:a0": "tsx scripts/smoke-a0.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm architecture:check && pnpm build"
   },
   "dependencies": {
