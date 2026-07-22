@@ -23,6 +23,7 @@ export const runtimeConfigSchema = Type.Object({
   databasePoolMax: Type.Integer({ minimum: 1, maximum: 100 }),
   databaseIdleTimeoutMs: Type.Integer({ minimum: 0, maximum: 600000 }),
   databaseConnectionTimeoutMs: Type.Integer({ minimum: 1, maximum: 120000 }),
+  sessionLifetimeMs: Type.Integer({ minimum: 1, maximum: 31536000000 }),
   databaseUrl: Type.Optional(Type.String({ minLength: 1 })),
 });
 
@@ -64,6 +65,7 @@ function configurationCandidate(environment: Environment): Record<string, unknow
       environment.GALAXIS_DATABASE_CONNECTION_TIMEOUT_MS,
       5000,
     ),
+    sessionLifetimeMs: parseInteger(environment.GALAXIS_SESSION_LIFETIME_MS, 604800000),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
   };
 }

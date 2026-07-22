@@ -1,5 +1,8 @@
 # Integrationstests
 
+`session-registration.test.ts` prüft die Sessionrouten, Bearer-Prüfung,
+Identitätsweitergabe und Abmeldung über `Fastify.inject()`.
+
 `rest-core.test.ts` prüft den Fastify-HTTP-Adapter isoliert mit
 `Fastify.inject()`.
 

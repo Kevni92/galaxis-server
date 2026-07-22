@@ -6,6 +6,9 @@ eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
 ## Status: A0 / GAL-BAL-DATA-001
 
+Issue #7 ergänzt gehashte Bearer-Sessions mit Ablauf, Widerruf und den drei
+Auth-Endpunkten für Anmeldung, Prüfung und Abmeldung.
+
 Issue #6 ergänzt lokale Accountregistrierung mit Argon2id, PostgreSQL-Persistenz
 und `POST /api/v1/auth/accounts` gemäß REST-Vertrag.
 
@@ -115,6 +118,9 @@ Die TypeScript-Compilergrenzen stehen in [`tsconfig.json`](tsconfig.json) und
 [`tsconfig.build.json`](tsconfig.build.json).
 
 ## Repository-Navigation
+
+Die Migrationen `001` bis `003` bilden Metadaten, Accounts und Bearer-Sessions;
+die Auth-Routen sind unter `src/transport/http/` navigierbar.
 
 - [`src/`](src/README.md) – Produktionsmodule und ihre Abhängigkeiten
   - [`app/composition-root`](src/app/composition-root/README.md)

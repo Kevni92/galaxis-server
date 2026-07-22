@@ -20,6 +20,10 @@ export const ARGON2ID_PASSWORD_OPTIONS = {
   saltLength: 16,
 } as const;
 
+/** A fixed valid Argon2id hash keeps unknown-account verification timing comparable. */
+export const DUMMY_PASSWORD_HASH =
+  "$argon2id$v=19$m=65536,p=1,t=3$aSx0bGqJIA8lAG7pt86iMA$qkNyd/ibAz4N+DPOvBEIqR9zVwfKEIIijPqTbnKcgE4";
+
 interface Argon2PasswordOptions {
   readonly type: typeof argon2.argon2id;
   readonly timeCost: number;

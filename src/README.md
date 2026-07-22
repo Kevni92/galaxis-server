@@ -1,5 +1,7 @@
 # Produktionsmodule
 
+Issue #7 ergänzt Sessionmodell, Authentifizierungshook und Sessionadapter.
+
 Issue #6 ergänzt das Accountmodell, den Registrierungs-Use-Case und die
 zugehörigen HTTP- und Infrastrukturadapter.
 

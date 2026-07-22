@@ -5,6 +5,7 @@ import Fastify from "fastify";
 import type { Logger } from "pino";
 
 import type { AccountRegistrationService } from "../../application/accounts/registration.js";
+import type { SessionService } from "../../application/sessions/service.js";
 import {
   NoExternalDependenciesReadinessProbe,
   type ReadinessProbe,
@@ -13,12 +14,14 @@ import type { RuntimeConfig } from "../../infrastructure/config/config.js";
 import { createLogger } from "../../infrastructure/logging/logger.js";
 import { registerErrorHandling } from "../../transport/http/error-handler.js";
 import { registerAuthRoutes } from "../../transport/http/auth-routes.js";
+import { registerSessionRoutes } from "../../transport/http/session-routes.js";
 import { registerHealthRoutes } from "../../transport/http/health-routes.js";
 
 export interface ServerDependencies {
   readonly logger?: Logger;
   readonly readinessProbe?: ReadinessProbe;
   readonly accountRegistration?: Pick<AccountRegistrationService, "register">;
+  readonly sessionService?: Pick<SessionService, "create" | "current" | "revoke" | "authenticate">;
 }
 
 function correlationId(request: {
@@ -42,6 +45,7 @@ export function createServer(config: RuntimeConfig, dependencies: ServerDependen
     connectionTimeout: config.connectionTimeoutMs,
   }).withTypeProvider<TypeBoxTypeProvider>();
 
+  server.decorateRequest("authIdentity", null);
   registerErrorHandling(server);
   server.addHook("onRequest", async (request) => {
     request.log.info({ component: "http", correlationId: request.id }, "request received");
@@ -49,6 +53,9 @@ export function createServer(config: RuntimeConfig, dependencies: ServerDependen
   registerHealthRoutes(server, readinessProbe);
   if (dependencies.accountRegistration !== undefined) {
     registerAuthRoutes(server, dependencies.accountRegistration);
+  }
+  if (dependencies.sessionService !== undefined) {
+    registerSessionRoutes(server, dependencies.sessionService);
   }
 
   return server;

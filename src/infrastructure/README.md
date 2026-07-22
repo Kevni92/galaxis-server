@@ -1,5 +1,7 @@
 # Infrastructure
 
+Token- und Sessionpersistenz liegen unter [`sessions/`](sessions/README.md).
+
 Accountadapter und Argon2id liegen unter [`accounts/`](accounts/README.md).
 
 Die Runtime-Adapter unter [`runtime/`](runtime/README.md) sind die einzige

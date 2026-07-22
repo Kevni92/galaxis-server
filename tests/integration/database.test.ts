@@ -8,6 +8,7 @@ import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { GenericContainer, type StartedTestContainer, Wait } from "testcontainers";
 
 import { KyselyAccountRepository } from "../../src/infrastructure/accounts/repository.js";
+import { KyselySessionRepository } from "../../src/infrastructure/sessions/repository.js";
 import { loadConfig } from "../../src/infrastructure/config/config.js";
 import { createPostgresDatabase } from "../../src/infrastructure/database/database.js";
 import { checkMigrations, runMigrations } from "../../src/infrastructure/database/migrations.js";
@@ -27,7 +28,7 @@ describe("PostgreSQL database foundation", () => {
           POSTGRES_PASSWORD: "galaxis",
         })
         .withExposedPorts(5432)
-        .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/u))
+        .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/u, 2))
         .withStartupTimeout(120000)
         .start();
 
@@ -55,11 +56,12 @@ describe("PostgreSQL database foundation", () => {
         "SELECT version, name FROM schema_migrations ORDER BY version",
       );
 
-      expect(first.appliedVersions).toEqual([1, 2]);
+      expect(first.appliedVersions).toEqual([1, 2, 3]);
       expect(second.appliedVersions).toEqual([]);
       expect(result.rows).toEqual([
         { version: 1, name: "create-schema-migrations" },
         { version: 2, name: "create-accounts" },
+        { version: 3, name: "create-sessions" },
       ]);
     } finally {
       await pool.end();
@@ -72,20 +74,30 @@ describe("PostgreSQL database foundation", () => {
     const directory = await mkdtemp(join(tmpdir(), "galaxis-failing-migrations-"));
 
     try {
+      for (const filename of [
+        "001-create-schema-migrations.sql",
+        "002-create-accounts.sql",
+        "003-create-sessions.sql",
+      ]) {
+        await writeFile(
+          join(directory, filename),
+          await readFile(join(migrationDirectory, filename), "utf8"),
+          "utf8",
+        );
+      }
       await writeFile(
-        join(directory, "001-create-marker.sql"),
-        "CREATE TABLE migration_marker (id INTEGER PRIMARY KEY);\n",
-        "utf8",
-      );
-      await writeFile(
-        join(directory, "002-fail.sql"),
-        "INSERT INTO migration_marker (id) VALUES (1);\nSELECT 1 / 0;\n",
+        join(directory, "004-fail.sql"),
+        "CREATE TABLE migration_marker (id INTEGER PRIMARY KEY);\nSELECT 1 / 0;\n",
         "utf8",
       );
 
       await expect(runMigrations(pool, directory)).rejects.toThrow("all changes were rolled back");
       await expect(pool.query("SELECT 1 FROM migration_marker")).rejects.toThrow();
-      await expect(pool.query("SELECT 1 FROM schema_migrations")).rejects.toThrow();
+      await expect(
+        pool.query("SELECT version FROM schema_migrations ORDER BY version"),
+      ).resolves.toMatchObject({
+        rows: [{ version: 1 }, { version: 2 }, { version: 3 }],
+      });
     } finally {
       await pool.end();
       await rm(directory, { recursive: true, force: true });
@@ -134,6 +146,62 @@ describe("PostgreSQL database foundation", () => {
         { account_id: account.id, password_hash: account.passwordHash },
       ]);
       expect(result.rows[0]?.password_hash).not.toBe("secret");
+    } finally {
+      await database.close();
+    }
+  });
+
+  it("stores session hashes, updates last-used time, and revokes sessions", async ({ skip }) => {
+    if (connectionString === undefined) return skip();
+    const database = createPostgresDatabase(
+      loadConfig({
+        GALAXIS_PORT: "3000",
+        GALAXIS_LOG_LEVEL: "silent",
+        GALAXIS_DATABASE_URL: connectionString,
+      }),
+    );
+    const accountRepository = new KyselyAccountRepository(database.db);
+    const sessionRepository = new KyselySessionRepository(database.db);
+
+    try {
+      await accountRepository.create({
+        id: "acc_session_integration_0001",
+        email: "session-integration@example.com",
+        passwordHash: "$argon2id$v=19$integration-hash",
+        createdAt: Date.UTC(2026, 0, 2),
+      });
+      const session = {
+        id: "ses_integration_0001",
+        accountId: "acc_session_integration_0001",
+        tokenHash: "sha256-session-hash",
+        createdAt: Date.UTC(2026, 0, 2),
+        expiresAt: Date.UTC(2026, 0, 9),
+        lastUsedAt: null,
+        revokedAt: null,
+      };
+
+      await sessionRepository.create(session);
+      const active = await sessionRepository.findActiveByTokenHash(
+        session.tokenHash,
+        Date.UTC(2026, 0, 3),
+      );
+      expect(active).toMatchObject({
+        id: session.id,
+        accountId: session.accountId,
+        tokenHash: session.tokenHash,
+        lastUsedAt: Date.UTC(2026, 0, 3),
+      });
+      expect(await sessionRepository.revoke(session.id, Date.UTC(2026, 0, 4))).toBe(true);
+      expect(
+        await sessionRepository.findActiveByTokenHash(session.tokenHash, Date.UTC(2026, 0, 4)),
+      ).toBeUndefined();
+
+      const result = await database.pool.query<{ token_hash: string }>(
+        "SELECT token_hash FROM sessions WHERE session_id = $1",
+        [session.id],
+      );
+      expect(result.rows).toEqual([{ token_hash: session.tokenHash }]);
+      expect(result.rows[0]?.token_hash).not.toBe("galaxis_session_opaque_token");
     } finally {
       await database.close();
     }

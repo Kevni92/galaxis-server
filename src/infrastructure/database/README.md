@@ -1,5 +1,7 @@
 # Datenbankadapter
 
+Issue #7 ergänzt die Sessiontabelle in `003-create-sessions.sql`.
+
 Die Accounttabelle und ihr Kysely-Repository gehören zu Issue #6;
 die zugehörige Migration ist `002-create-accounts.sql`.
 

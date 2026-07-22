@@ -3,11 +3,14 @@
 
 import type { Kysely } from "kysely";
 
-import type { AccountRepository } from "../../application/accounts/ports.js";
+import type {
+  AccountCredentialReader,
+  AccountRepository,
+} from "../../application/accounts/ports.js";
 import type { Account } from "../../domain/accounts/account.js";
-import type { DatabaseSchema } from "../database/database.js";
+import type { AccountTable, DatabaseSchema } from "../database/database.js";
 
-export class KyselyAccountRepository implements AccountRepository {
+export class KyselyAccountRepository implements AccountRepository, AccountCredentialReader {
   private readonly database: Kysely<DatabaseSchema>;
 
   public constructor(database: Kysely<DatabaseSchema>) {
@@ -29,4 +32,33 @@ export class KyselyAccountRepository implements AccountRepository {
 
     return inserted !== undefined;
   }
+
+  public async findByEmail(email: string): Promise<Account | undefined> {
+    const row = await this.database
+      .selectFrom("accounts")
+      .selectAll()
+      .where("email", "=", email)
+      .executeTakeFirst();
+    return row === undefined ? undefined : toAccount(row);
+  }
+
+  public async findById(accountId: string): Promise<Account | undefined> {
+    const row = await this.database
+      .selectFrom("accounts")
+      .selectAll()
+      .where("account_id", "=", accountId)
+      .executeTakeFirst();
+    return row === undefined ? undefined : toAccount(row);
+  }
+}
+
+function toAccount(
+  row: Pick<AccountTable, "account_id" | "email" | "password_hash" | "created_at">,
+): Account {
+  return {
+    id: row.account_id,
+    email: row.email,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at.getTime(),
+  };
 }

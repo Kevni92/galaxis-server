@@ -8,6 +8,11 @@ export interface AccountRepository {
   create(account: Account): Promise<boolean>;
 }
 
+export interface AccountCredentialReader {
+  findByEmail(email: string): Promise<Account | undefined>;
+  findById(accountId: string): Promise<Account | undefined>;
+}
+
 export interface PasswordHasher {
   hash(password: string): Promise<string>;
   verify(passwordHash: string, password: string): Promise<boolean>;
