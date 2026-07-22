@@ -1,5 +1,6 @@
 name: Run alpha server bootstrap
 
+# trigger 1
 on:
   push:
     branches: [main]
