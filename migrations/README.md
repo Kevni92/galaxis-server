@@ -1,7 +1,14 @@
 # Datenbankmigrationen
 
-Dieser Bereich ist für spätere, versionierte PostgreSQL-SQL-Migrationen
-reserviert. Issue #1 legt keine Tabellen, Migrationen oder Datenbankadapter an.
+Versionierte PostgreSQL-SQL-Dateien werden durch `pnpm db:migrate` in einer
+gemeinsamen Transaktion angewendet. `schema_migrations` speichert Version,
+Namen und SHA-256-Prüfsumme; geänderte oder entfernte bereits angewendete
+Migrationen werden abgelehnt. `pnpm db:migrate:check` prüft, ob alle Dateien
+angewendet und unverändert sind.
+
+| Datei                              | Verantwortung                                |
+| ---------------------------------- | -------------------------------------------- |
+| `001-create-schema-migrations.sql` | A0-Migrationsmetadaten ohne Gameplaytabellen |
 
 Die Architekturentscheidung steht in
 [`docs/decisions/0005-a0-server-technologiestack.md`](../docs/decisions/0005-a0-server-technologiestack.md).

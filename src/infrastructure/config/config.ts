@@ -20,6 +20,9 @@ export const runtimeConfigSchema = Type.Object({
   maxBodyBytes: Type.Integer({ minimum: 1, maximum: 10485760 }),
   requestTimeoutMs: Type.Integer({ minimum: 1, maximum: 120000 }),
   connectionTimeoutMs: Type.Integer({ minimum: 1, maximum: 120000 }),
+  databasePoolMax: Type.Integer({ minimum: 1, maximum: 100 }),
+  databaseIdleTimeoutMs: Type.Integer({ minimum: 0, maximum: 600000 }),
+  databaseConnectionTimeoutMs: Type.Integer({ minimum: 1, maximum: 120000 }),
   databaseUrl: Type.Optional(Type.String({ minLength: 1 })),
 });
 
@@ -55,6 +58,12 @@ function configurationCandidate(environment: Environment): Record<string, unknow
     maxBodyBytes: parseInteger(environment.GALAXIS_MAX_BODY_BYTES, 1048576),
     requestTimeoutMs: parseInteger(environment.GALAXIS_REQUEST_TIMEOUT_MS, 30000),
     connectionTimeoutMs: parseInteger(environment.GALAXIS_CONNECTION_TIMEOUT_MS, 30000),
+    databasePoolMax: parseInteger(environment.GALAXIS_DATABASE_POOL_MAX, 10),
+    databaseIdleTimeoutMs: parseInteger(environment.GALAXIS_DATABASE_IDLE_TIMEOUT_MS, 10000),
+    databaseConnectionTimeoutMs: parseInteger(
+      environment.GALAXIS_DATABASE_CONNECTION_TIMEOUT_MS,
+      5000,
+    ),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
   };
 }

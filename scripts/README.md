@@ -9,5 +9,6 @@ dürfen Node.js-I/O verwenden. Sie definieren keine Serverfachlogik.
 | [`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs) | Prüft Importzyklen und Schicht-/Paketgrenzen, sobald `dependency-cruiser` installiert ist |
 
 Die ausführbaren Einstiegspunkte sind im Root-`package.json` als pnpm-Skripte
-definiert. Integration- und Contract-Skripte akzeptieren bis zur Einführung
-der jeweiligen Module bewusst leere Testbereiche.
+definiert. Datenbankmigrationen werden über `pnpm db:migrate` angewendet und
+mit `pnpm db:migrate:check` geprüft; die Implementierung liegt wegen ihrer
+Produktionsabhängigkeiten unter `src/infrastructure/database`.

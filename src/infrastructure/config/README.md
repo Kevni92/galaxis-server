@@ -5,6 +5,6 @@ Dieser Bereich kapselt TypeBox-Schemas und den einzigen Zugriff auf
 unveränderliches Objekt weitergereicht. Datenbank-URLs werden niemals in
 Log-Metadaten übernommen.
 
-| Datei/Modul | Verantwortung                                                                         | Fachliche Quelle                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `config.ts` | Environment-Mapping, TypeBox-Validierung, HTTP-Grenzen und redigierbare Konfiguration | [`docs/decisions/0005-a0-server-technologiestack.md`](../../../docs/decisions/0005-a0-server-technologiestack.md) |
+| Datei/Modul | Verantwortung                                                                                   | Fachliche Quelle                                                                                                  |
+| ----------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `config.ts` | Environment-Mapping, TypeBox-Validierung, HTTP-/Datenbankgrenzen und redigierbare Konfiguration | [`docs/decisions/0005-a0-server-technologiestack.md`](../../../docs/decisions/0005-a0-server-technologiestack.md) |

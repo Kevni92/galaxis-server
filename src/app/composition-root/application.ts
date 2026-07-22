@@ -8,6 +8,11 @@ import type {
 import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
 import type { RuntimeConfig } from "../../infrastructure/config/config.js";
+import {
+  createPostgresDatabase,
+  type PostgresDatabase,
+} from "../../infrastructure/database/database.js";
+import { PostgresReadinessProbe } from "../../infrastructure/database/readiness.js";
 import { createLogger, redactedConfig } from "../../infrastructure/logging/logger.js";
 import { createServer, type ServerDependencies } from "./server.js";
 
@@ -19,12 +24,14 @@ export interface ApplicationDependencies {
   readonly logger?: Logger;
   readonly readinessProbe?: ReadinessProbe;
   readonly balancingLoader?: BalancingLoader;
+  readonly database?: PostgresDatabase;
   readonly resources?: readonly ShutdownResource[];
 }
 
 export interface ServerApplication {
   readonly logger: Logger;
   readonly server: ReturnType<typeof createServer>;
+  readonly database: PostgresDatabase | undefined;
   readonly balancingConfiguration: LoadedBalancingConfiguration | undefined;
   start(): Promise<void>;
   shutdown(reason?: string): Promise<void>;
@@ -48,16 +55,24 @@ export function createApplication(
   dependencies: ApplicationDependencies = {},
 ): ServerApplication {
   const logger = dependencies.logger ?? createLogger(config);
-  const resources = dependencies.resources ?? [];
+  const database =
+    config.databaseUrl === undefined
+      ? undefined
+      : (dependencies.database ?? createPostgresDatabase(config));
+  const resources = [
+    ...(dependencies.resources ?? []),
+    ...(database === undefined ? [] : [database]),
+  ];
   const balancingLoader =
     dependencies.balancingLoader ??
     new FileSystemBalancingLoader(
       fileURLToPath(new URL("../../../data/balancing/manifest.json", import.meta.url)),
     );
+  const readinessProbe =
+    dependencies.readinessProbe ??
+    (database === undefined ? undefined : new PostgresReadinessProbe(database));
   const serverDependencies: ServerDependencies =
-    dependencies.readinessProbe === undefined
-      ? { logger }
-      : { logger, readinessProbe: dependencies.readinessProbe };
+    readinessProbe === undefined ? { logger } : { logger, readinessProbe };
   const server = createServer(config, serverDependencies);
   let started = false;
   let shutdownPromise: Promise<void> | undefined;
@@ -120,6 +135,7 @@ export function createApplication(
   return {
     logger,
     server,
+    database,
     get balancingConfiguration() {
       return balancingConfiguration;
     },

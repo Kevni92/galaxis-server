@@ -11,6 +11,8 @@
   "scripts": {
     "architecture:check": "node scripts/check-architecture.mjs && depcruise --validate .dependency-cruiser.cjs src",
     "build": "tsc -p tsconfig.build.json",
+    "db:migrate": "tsx src/infrastructure/database/migrate.ts",
+    "db:migrate:check": "tsx src/infrastructure/database/migrate.ts --check",
     "dev": "tsx watch src/app/composition-root/main.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
