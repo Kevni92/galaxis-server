@@ -9,3 +9,10 @@
 7. Betroffene lokale `README.md`-Dateien lesen und bei Strukturänderungen aktualisieren. Module klein und klar abgegrenzt halten.
 8. Fachlich relevanten Quellcode gemäß `docs/SOURCE-CODE.md` knapp mit den maßgeblichen Dokumenten verknüpfen.
 9. Tests gemäß `docs/TESTING.md` risikobasiert und möglichst schnell ausführen.
+
+## Branch- und PR-Regeln
+
+10. Neue Feature- und Reparaturbranches werden immer direkt vom aktuell gefetchteten `origin/main` erstellt.
+11. Jeder Pull Request verwendet ausschließlich `main` als Base-Branch.
+12. Feature-Branches dürfen nicht ineinander gemergt oder als gestapelte Pull Requests veröffentlicht werden.
+13. Mit dem nächsten Issue wird erst begonnen, nachdem der Pull Request des vorherigen Issues in `main` gemergt wurde.
