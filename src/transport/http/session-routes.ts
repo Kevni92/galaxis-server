@@ -13,13 +13,13 @@ import type { SessionService } from "../../application/sessions/service.js";
 import { errorResponseSchema } from "./error-handler.js";
 import { readBearerToken } from "./auth-hook.js";
 
-const sessionCredentialsRequest = Type.Object({
+export const sessionCredentialsRequest = Type.Object({
   email: Type.String({ minLength: 1, format: "email" }),
   password: Type.String({ minLength: 1, format: "password", writeOnly: true }),
 });
 type SessionCredentialsRequest = Static<typeof sessionCredentialsRequest>;
 
-const sessionCreatedResponse = Type.Object({
+export const sessionCreatedResponse = Type.Object({
   sessionId: Type.String({ minLength: 1 }),
   accountId: Type.String({ minLength: 1 }),
   email: Type.String({ minLength: 1, format: "email" }),
@@ -28,7 +28,7 @@ const sessionCreatedResponse = Type.Object({
   expiresAt: Type.String({ format: "date-time" }),
 });
 
-const sessionResponse = Type.Object({
+export const sessionResponse = Type.Object({
   sessionId: Type.String({ minLength: 1 }),
   accountId: Type.String({ minLength: 1 }),
   email: Type.String({ minLength: 1, format: "email" }),

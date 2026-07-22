@@ -13,13 +13,13 @@ import type {
 import type { AccountRegistrationService } from "../../application/accounts/registration.js";
 import { errorResponseSchema } from "./error-handler.js";
 
-const createAccountRequest = Type.Object({
+export const createAccountRequest = Type.Object({
   email: Type.String({ minLength: 1, format: "email" }),
   password: Type.String({ minLength: 1, format: "password", writeOnly: true }),
 });
 type CreateAccountRequest = Static<typeof createAccountRequest>;
 
-const accountResponse = Type.Object({
+export const accountResponse = Type.Object({
   accountId: Type.String({ minLength: 1 }),
   email: Type.String({ minLength: 1, format: "email" }),
   createdAt: Type.String({ format: "date-time" }),
