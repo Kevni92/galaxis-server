@@ -1,5 +1,8 @@
 # Produktionsmodule
 
+Issue #6 ergänzt das Accountmodell, den Registrierungs-Use-Case und die
+zugehörigen HTTP- und Infrastrukturadapter.
+
 Die Balancing-Ports und -Adapter sind unter
 [`application/balancing`](application/balancing/README.md) und
 [`infrastructure/balancing`](infrastructure/balancing/README.md) dokumentiert.

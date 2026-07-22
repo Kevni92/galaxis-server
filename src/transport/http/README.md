@@ -1,5 +1,8 @@
 # HTTP-Transport
 
+[`auth-routes.ts`](auth-routes.ts) registriert `POST /api/v1/auth/accounts`
+gemäß [`galaxis-rest-v1.yaml`](../../../docs/contracts/rest-api/galaxis-rest-v1.yaml).
+
 Der HTTP-Adapter validiert Requests und Responses mit TypeBox und Fastify,
 ruft Application-Use-Cases auf und übersetzt Ergebnisse bzw. Fehler. Er
 enthält keine Fachlogik und importiert keine Infrastrukturadapter.

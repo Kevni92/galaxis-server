@@ -1,13 +1,22 @@
 // Feature: GAL-PLATFORM-DB-001
 // Fachliche Grundlage: docs/decisions/0005-a0-server-technologiestack.md
 
-import { Kysely, PostgresDialect } from "kysely";
+import { Kysely, PostgresDialect, type Generated } from "kysely";
 import { Pool } from "pg";
 
 import type { RuntimeConfig } from "../config/config.js";
 
-/** The empty schema is intentional until the first feature-owned table is introduced. */
-export type DatabaseSchema = Record<string, never>;
+export interface AccountTable {
+  id: Generated<number>;
+  account_id: string;
+  email: string;
+  password_hash: string;
+  created_at: Date;
+}
+
+export interface DatabaseSchema {
+  accounts: AccountTable;
+}
 
 export interface PostgresDatabase {
   readonly pool: Pool;

@@ -4,6 +4,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify from "fastify";
 import type { Logger } from "pino";
 
+import type { AccountRegistrationService } from "../../application/accounts/registration.js";
 import {
   NoExternalDependenciesReadinessProbe,
   type ReadinessProbe,
@@ -11,11 +12,13 @@ import {
 import type { RuntimeConfig } from "../../infrastructure/config/config.js";
 import { createLogger } from "../../infrastructure/logging/logger.js";
 import { registerErrorHandling } from "../../transport/http/error-handler.js";
+import { registerAuthRoutes } from "../../transport/http/auth-routes.js";
 import { registerHealthRoutes } from "../../transport/http/health-routes.js";
 
 export interface ServerDependencies {
   readonly logger?: Logger;
   readonly readinessProbe?: ReadinessProbe;
+  readonly accountRegistration?: Pick<AccountRegistrationService, "register">;
 }
 
 function correlationId(request: {
@@ -44,6 +47,9 @@ export function createServer(config: RuntimeConfig, dependencies: ServerDependen
     request.log.info({ component: "http", correlationId: request.id }, "request received");
   });
   registerHealthRoutes(server, readinessProbe);
+  if (dependencies.accountRegistration !== undefined) {
+    registerAuthRoutes(server, dependencies.accountRegistration);
+  }
 
   return server;
 }

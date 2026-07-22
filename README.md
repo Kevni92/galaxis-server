@@ -6,6 +6,9 @@ eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
 ## Status: A0 / GAL-BAL-DATA-001
 
+Issue #6 ergänzt lokale Accountregistrierung mit Argon2id, PostgreSQL-Persistenz
+und `POST /api/v1/auth/accounts` gemäß REST-Vertrag.
+
 Issue #9 ergänzt die versionierte A0-Balancing-Baseline mit strikter
 Validierung, tief unveränderlicher Konfiguration und kanonischem SHA-256-Hash.
 

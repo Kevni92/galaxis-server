@@ -1,12 +1,15 @@
 import type { Logger } from "pino";
 import { fileURLToPath } from "node:url";
 
+import { AccountRegistrationService } from "../../application/accounts/registration.js";
 import type {
   BalancingLoader,
   LoadedBalancingConfiguration,
 } from "../../application/balancing/loader.js";
 import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
+import { KyselyAccountRepository } from "../../infrastructure/accounts/repository.js";
+import { Argon2PasswordHasher } from "../../infrastructure/accounts/password-hasher.js";
 import type { RuntimeConfig } from "../../infrastructure/config/config.js";
 import {
   createPostgresDatabase,
@@ -14,6 +17,9 @@ import {
 } from "../../infrastructure/database/database.js";
 import { PostgresReadinessProbe } from "../../infrastructure/database/readiness.js";
 import { createLogger, redactedConfig } from "../../infrastructure/logging/logger.js";
+import { SystemWallClock } from "../../infrastructure/runtime/clocks.js";
+import { NodeCryptographicRandomSource } from "../../infrastructure/runtime/random.js";
+import { PrefixedIdGenerator } from "../../infrastructure/runtime/ids.js";
 import { createServer, type ServerDependencies } from "./server.js";
 
 export interface ShutdownResource {
@@ -25,6 +31,7 @@ export interface ApplicationDependencies {
   readonly readinessProbe?: ReadinessProbe;
   readonly balancingLoader?: BalancingLoader;
   readonly database?: PostgresDatabase;
+  readonly accountRegistration?: Pick<AccountRegistrationService, "register">;
   readonly resources?: readonly ShutdownResource[];
 }
 
@@ -71,8 +78,21 @@ export function createApplication(
   const readinessProbe =
     dependencies.readinessProbe ??
     (database === undefined ? undefined : new PostgresReadinessProbe(database));
-  const serverDependencies: ServerDependencies =
-    readinessProbe === undefined ? { logger } : { logger, readinessProbe };
+  const accountRegistration =
+    dependencies.accountRegistration ??
+    (database === undefined
+      ? undefined
+      : new AccountRegistrationService({
+          repository: new KyselyAccountRepository(database.db),
+          passwordHasher: new Argon2PasswordHasher(),
+          idGenerator: new PrefixedIdGenerator(new NodeCryptographicRandomSource()),
+          wallClock: new SystemWallClock(),
+        }));
+  const serverDependencies: ServerDependencies = {
+    logger,
+    ...(readinessProbe === undefined ? {} : { readinessProbe }),
+    ...(accountRegistration === undefined ? {} : { accountRegistration }),
+  };
   const server = createServer(config, serverDependencies);
   let started = false;
   let shutdownPromise: Promise<void> | undefined;

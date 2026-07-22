@@ -1,5 +1,8 @@
 # Application
 
+Die lokale Registrierung liegt in [`accounts/registration.ts`](accounts/registration.ts)
+und verwendet die injizierbaren Ports aus [`accounts/ports.ts`](accounts/ports.ts).
+
 Der Balancing-Port liegt unter [`balancing/`](balancing/README.md) und liefert
 eine validierte, tief unveränderliche Konfiguration ohne Node-I/O-Typen.
 
