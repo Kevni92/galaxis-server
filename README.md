@@ -4,12 +4,12 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-PLATFORM-STACK-001
+## Status: A0 / GAL-PLATFORM-RUNTIME-001
 
-Issue #1 legt den Technologiestack, die Modulstruktur und die automatisiert
-prüfbaren Importgrenzen fest. Diese Änderung enthält absichtlich keine
-HTTP-Routen, Datenbanktabellen, Authentifizierung, Kampagnen oder
-Gameplaylogik.
+Issue #3 ergänzt die baubare Basis um strikt validierte Runtime-Konfiguration,
+strukturiertes Pino-Logging, technische Health-Endpunkte und einen kontrollierten
+Shutdown-Lifecycle. Es gibt weiterhin keine Datenbanktabellen,
+Authentifizierung, Kampagnen oder Gameplaylogik.
 
 ## Verbindlicher Stack
 
@@ -22,10 +22,52 @@ Gameplaylogik.
 - Vitest, Fastify `inject()` und Testcontainers
 - ESLint, Prettier und `dependency-cruiser` für statische Qualitäts- und Architekturprüfungen
 
-Die konkrete Repositorybasis mit installierbaren Abhängigkeiten, Entrypoint,
-Migration-Runner und CI folgt in den dafür vorgesehenen A0-Issues. Dieser
-Bootstrap dokumentiert und prüft bereits die Grenzen, an die diese Module
-später angeschlossen werden.
+Die installierbaren Abhängigkeiten und Versionen sind in
+[`package.json`](package.json) und [`pnpm-lock.yaml`](pnpm-lock.yaml) festgelegt.
+Der Entrypoint startet eine kleine Fastify-Anwendung. Fachliche und produktive
+HTTP-Module folgen in späteren A0-Issues.
+
+## Frischer Checkout
+
+Die folgenden Befehle gelten für PowerShell unter Windows sowie Bash/Zsh unter
+Linux und macOS:
+
+```bash
+git clone --recurse-submodules https://github.com/Kevni92/galaxis-server.git
+cd galaxis-server
+git submodule update --init --recursive
+corepack enable
+corepack install
+node --version       # v24.18.0
+pnpm --version       # 11.4.0
+pnpm install --frozen-lockfile
+pnpm check
+```
+
+Docker Desktop beziehungsweise Docker Engine ist für diese repositoryweite
+Basis noch nicht erforderlich. Die Installation kann mit
+`docker compose version` geprüft werden; der PostgreSQL-Compose-Stack gehört
+zu Issue #4.
+
+Lokaler Start und Produktionsbuild. `GALAXIS_PORT` und `GALAXIS_LOG_LEVEL`
+sind Pflichtwerte; weitere Werte stehen in [`.env.example`](.env.example):
+
+```powershell
+$env:GALAXIS_PORT="3000"
+$env:GALAXIS_LOG_LEVEL="info"
+pnpm dev
+```
+
+```bash
+GALAXIS_PORT=3000 GALAXIS_LOG_LEVEL=info pnpm dev
+pnpm build
+pnpm start
+```
+
+Der Server lauscht standardmäßig auf `127.0.0.1:3000`. `GET /health/live`
+prüft nur, ob der Prozess HTTP-Anfragen bedient. `GET /health/ready` verwendet
+eine injizierte Readiness-Prüfung und liefert bis zur Einführung des
+PostgreSQL-Adapters in Issue #4 eine dependency-freie Bereitschaft.
 
 ## Modulstruktur und Abhängigkeiten
 
@@ -36,17 +78,17 @@ infrastructure ──▶ Ports aus application/domain
 app/composition-root ──▶ verdrahtet alle Module und den Lifecycle
 ```
 
-| Bereich | Verantwortung | Darf abhängen von |
-|---|---|---|
-| `src/domain` | Fachmodelle, Invarianten und später deterministische Berechnungen | ausschließlich Domaintypen und injizierte Ports |
-| `src/application` | Anwendungsfälle, Orchestrierung und Transaktionsgrenzen | `domain`, Ports |
-| `src/infrastructure` | technische Adapter für Konfiguration, Logging, Datenbank und Balancing | `application`-/`domain`-Ports, technische Bibliotheken |
-| `src/transport/http` | HTTP-/JSON-Validierung und Übersetzung | `application`, TypeBox, Fastify |
-| `src/app/composition-root` | Komposition, Abhängigkeiten und Lifecycle | alle konkreten Adapter und Application-Einstiegspunkte |
+| Bereich                    | Verantwortung                                                          | Darf abhängen von                                      |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------ |
+| `src/domain`               | Fachmodelle, Invarianten und später deterministische Berechnungen      | ausschließlich Domaintypen und injizierte Ports        |
+| `src/application`          | Anwendungsfälle, Orchestrierung und Transaktionsgrenzen                | `domain`, Ports                                        |
+| `src/infrastructure`       | technische Adapter für Konfiguration, Logging, Datenbank und Balancing | `application`-/`domain`-Ports, technische Bibliotheken |
+| `src/transport/http`       | HTTP-/JSON-Validierung und Übersetzung                                 | `application`, TypeBox, Fastify                        |
+| `src/app/composition-root` | Komposition, Abhängigkeiten und Lifecycle                              | alle konkreten Adapter und Application-Einstiegspunkte |
 
-`domain` bleibt von Fastify, TypeBox, Kysely, `pg`, `process.env`,
-Node-I/O sowie direktem Zugriff auf Systemzeit und Zufall getrennt. Verboten
-sind insbesondere `Date.now()`, `new Date()`, `Math.random()` und
+`domain` bleibt von Fastify, TypeBox, Kysely, `pg`, `process.env`, Node-I/O
+sowie direktem Zugriff auf Systemzeit und Zufall getrennt. Verboten sind
+insbesondere `Date.now()`, `new Date()`, `Math.random()` und
 `crypto.randomUUID()` im Domaincode. Zeit, IDs und Simulationszufall werden
 später über Ports injiziert; kryptografischer Zufall bleibt davon getrennt.
 
@@ -75,11 +117,11 @@ Die TypeScript-Compilergrenzen stehen in [`tsconfig.json`](tsconfig.json) und
 - [Verbindlicher Arbeitsworkflow](docs/WORKFLOW.md)
 - [Teststrategie](docs/TESTING.md)
 - [Quellcodedokumentation](docs/SOURCE-CODE.md)
+- [REST-Vertrag](docs/contracts/rest-api/galaxis-rest-v1.md)
 
 ## Lokale Prüfstruktur
 
-Nach dem Repository-Basis-Issue werden die folgenden pnpm-Ziele verbindlich
-ausgeführt:
+Die folgenden pnpm-Ziele sind im Root-Manifest definiert:
 
 ```text
 pnpm format:check
@@ -92,7 +134,6 @@ pnpm build
 pnpm architecture:check
 ```
 
-Issue #1 führt davon die unabhängige Architekturprüfung bereits ohne
-Produktionsabhängigkeiten aus. Datenbank-, HTTP-, Contract- und
-End-to-End-Prüfungen gehören nicht zu diesem Issue, weil die dafür nötigen
-Module noch bewusst nicht implementiert sind.
+`test:integration` und `test:contract` akzeptieren bis zur Einführung der
+jeweiligen Module bewusst leere Testbereiche. `architecture:check` führt sowohl
+die direkte Boundary-Prüfung als auch `dependency-cruiser` aus.

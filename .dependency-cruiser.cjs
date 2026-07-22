@@ -8,15 +8,15 @@ module.exports = {
       name: "no-circular",
       severity: "error",
       from: {},
-      to: { circular: true }
+      to: { circular: true },
     },
     {
       name: "domain-does-not-import-technical-adapters",
       severity: "error",
       from: { path: "^src/domain" },
       to: {
-        path: "^src/(application|infrastructure|transport|app)"
-      }
+        path: "^src/(application|infrastructure|transport|app)",
+      },
     },
     {
       name: "domain-does-not-import-technical-packages",
@@ -24,38 +24,38 @@ module.exports = {
       from: { path: "^src/domain" },
       to: {
         pathNot: "^src/domain",
-        path: "(^|/)(fastify|@fastify/|@sinclair/typebox|kysely|pg|node:)"
-      }
+        path: "(^|/)(fastify|@fastify/|@sinclair/typebox|kysely|pg|node:)",
+      },
     },
     {
       name: "application-does-not-import-transport",
       severity: "error",
       from: { path: "^src/application" },
-      to: { path: "^src/transport" }
+      to: { path: "^src/transport" },
     },
     {
       name: "application-does-not-import-infrastructure",
       severity: "error",
       from: { path: "^src/application" },
-      to: { path: "^src/infrastructure" }
+      to: { path: "^src/infrastructure" },
     },
     {
       name: "transport-does-not-import-infrastructure",
       severity: "error",
       from: { path: "^src/transport" },
-      to: { path: "^src/infrastructure" }
-    }
+      to: { path: "^src/infrastructure" },
+    },
   ],
   options: {
     doNotFollow: {
-      path: "(^|/)(node_modules|dist|coverage)/"
+      path: "(^|/)(node_modules|dist|coverage)/",
     },
     tsConfig: {
-      fileName: "tsconfig.json"
+      fileName: "tsconfig.json",
     },
     exclude: "(^|/)(README\\.md|.*\\.test\\.ts)$",
     moduleSystems: ["es6", "cjs"],
     preserveSymlinks: false,
-    prefix: ""
-  }
+    prefix: "",
+  },
 };
