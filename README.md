@@ -4,12 +4,11 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-PLATFORM-STACK-001
+## Status: A0 / GAL-PLATFORM-REPO-001
 
-Issue #1 legt den Technologiestack, die Modulstruktur und die automatisiert
-prüfbaren Importgrenzen fest. Diese Änderung enthält absichtlich keine
-HTTP-Routen, Datenbanktabellen, Authentifizierung, Kampagnen oder
-Gameplaylogik.
+Issue #2 macht die in Issue #1 festgelegte Struktur nach einem frischen Clone
+baubar, testbar und lokal startfähig. Diese Basis enthält absichtlich keine
+HTTP-Routen, Datenbanktabellen, Authentifizierung, Kampagnen oder Gameplaylogik.
 
 ## Verbindlicher Stack
 
@@ -22,10 +21,43 @@ Gameplaylogik.
 - Vitest, Fastify `inject()` und Testcontainers
 - ESLint, Prettier und `dependency-cruiser` für statische Qualitäts- und Architekturprüfungen
 
-Die konkrete Repositorybasis mit installierbaren Abhängigkeiten, Entrypoint,
-Migration-Runner und CI folgt in den dafür vorgesehenen A0-Issues. Dieser
-Bootstrap dokumentiert und prüft bereits die Grenzen, an die diese Module
-später angeschlossen werden.
+Die installierbaren Abhängigkeiten und Versionen sind in
+[`package.json`](package.json) und [`pnpm-lock.yaml`](pnpm-lock.yaml) festgelegt.
+Der minimale Entrypoint startet eine leere Fastify-Anwendung; fachliche und
+produktive HTTP-Module folgen in späteren A0-Issues.
+
+## Frischer Checkout
+
+Die folgenden Befehle gelten für PowerShell unter Windows sowie Bash/Zsh unter
+Linux und macOS:
+
+```bash
+git clone --recurse-submodules https://github.com/Kevni92/galaxis-server.git
+cd galaxis-server
+git submodule update --init --recursive
+corepack enable
+corepack install
+node --version       # v24.18.0
+pnpm --version       # 11.4.0
+pnpm install --frozen-lockfile
+pnpm check
+```
+
+Docker Desktop beziehungsweise Docker Engine ist für diese repositoryweite
+Basis noch nicht erforderlich. Die Installation kann mit
+`docker compose version` geprüft werden; der PostgreSQL-Compose-Stack gehört
+zu Issue #4.
+
+Lokaler Start und Produktionsbuild:
+
+```bash
+pnpm dev
+pnpm build
+pnpm start
+```
+
+Der Server lauscht lokal auf `127.0.0.1:3000` und registriert in Issue #2
+bewusst keine Route.
 
 ## Modulstruktur und Abhängigkeiten
 
@@ -36,13 +68,13 @@ infrastructure ──▶ Ports aus application/domain
 app/composition-root ──▶ verdrahtet alle Module und den Lifecycle
 ```
 
-| Bereich | Verantwortung | Darf abhängen von |
-|---|---|---|
-| `src/domain` | Fachmodelle, Invarianten und später deterministische Berechnungen | ausschließlich Domaintypen und injizierte Ports |
-| `src/application` | Anwendungsfälle, Orchestrierung und Transaktionsgrenzen | `domain`, Ports |
-| `src/infrastructure` | technische Adapter für Konfiguration, Logging, Datenbank und Balancing | `application`-/`domain`-Ports, technische Bibliotheken |
-| `src/transport/http` | HTTP-/JSON-Validierung und Übersetzung | `application`, TypeBox, Fastify |
-| `src/app/composition-root` | Komposition, Abhängigkeiten und Lifecycle | alle konkreten Adapter und Application-Einstiegspunkte |
+| Bereich                    | Verantwortung                                                          | Darf abhängen von                                      |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------ |
+| `src/domain`               | Fachmodelle, Invarianten und später deterministische Berechnungen      | ausschließlich Domaintypen und injizierte Ports        |
+| `src/application`          | Anwendungsfälle, Orchestrierung und Transaktionsgrenzen                | `domain`, Ports                                        |
+| `src/infrastructure`       | technische Adapter für Konfiguration, Logging, Datenbank und Balancing | `application`-/`domain`-Ports, technische Bibliotheken |
+| `src/transport/http`       | HTTP-/JSON-Validierung und Übersetzung                                 | `application`, TypeBox, Fastify                        |
+| `src/app/composition-root` | Komposition, Abhängigkeiten und Lifecycle                              | alle konkreten Adapter und Application-Einstiegspunkte |
 
 `domain` bleibt von Fastify, TypeBox, Kysely, `pg`, `process.env`,
 Node-I/O sowie direktem Zugriff auf Systemzeit und Zufall getrennt. Verboten
@@ -78,8 +110,7 @@ Die TypeScript-Compilergrenzen stehen in [`tsconfig.json`](tsconfig.json) und
 
 ## Lokale Prüfstruktur
 
-Nach dem Repository-Basis-Issue werden die folgenden pnpm-Ziele verbindlich
-ausgeführt:
+Die folgenden pnpm-Ziele sind im Root-Manifest definiert:
 
 ```text
 pnpm format:check
@@ -92,7 +123,6 @@ pnpm build
 pnpm architecture:check
 ```
 
-Issue #1 führt davon die unabhängige Architekturprüfung bereits ohne
-Produktionsabhängigkeiten aus. Datenbank-, HTTP-, Contract- und
-End-to-End-Prüfungen gehören nicht zu diesem Issue, weil die dafür nötigen
-Module noch bewusst nicht implementiert sind.
+`test:integration` und `test:contract` akzeptieren bis zur Einführung der
+jeweiligen Module bewusst leere Testbereiche. `architecture:check` führt sowohl
+die direkte Boundary-Prüfung als auch `dependency-cruiser` aus.

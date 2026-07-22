@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -8,18 +8,20 @@ const domainRoot = join(repositoryRoot, "src", "domain");
 const forbiddenImportPatterns = [
   /\bfrom\s+["'](?:fastify|@fastify\/|@sinclair\/typebox|kysely|pg|node:)/u,
   /\bimport\s*(?:\(\s*)?["'](?:fastify|@fastify\/|@sinclair\/typebox|kysely|pg|node:)/u,
-  /\bprocess\.env\b/u
+  /\bprocess\.env\b/u,
 ];
 
 const forbiddenDirectAccessPatterns = [
   /\bDate\.now\s*\(/u,
   /\bnew\s+Date\s*\(/u,
   /\bMath\.random\s*\(/u,
-  /\bcrypto\.randomUUID\s*\(/u
+  /\bcrypto\.randomUUID\s*\(/u,
 ];
 
 function sourceFiles(directory) {
-  if (!statSync(directory, { throwIfNoEntry: false })) return [];
+  const stats = statSync(directory, { throwIfNoEntry: false });
+  if (!stats) return [];
+  if (stats.isFile()) return /\.tsx?$/u.test(directory) ? [directory] : [];
 
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
@@ -28,23 +30,30 @@ function sourceFiles(directory) {
   });
 }
 
-const violations = [];
-for (const file of sourceFiles(domainRoot)) {
-  const source = readFileSync(file, "utf8");
-  const path = relative(repositoryRoot, file);
+function findViolations(target) {
+  const violations = [];
+  for (const file of sourceFiles(target)) {
+    const source = readFileSync(file, "utf8");
+    const path = relative(repositoryRoot, file);
 
-  for (const pattern of forbiddenImportPatterns) {
-    if (pattern.test(source)) {
-      violations.push(`${path}: forbidden technical import or process access (${pattern})`);
+    for (const pattern of forbiddenImportPatterns) {
+      if (pattern.test(source)) {
+        violations.push(`${path}: forbidden technical import or process access (${pattern})`);
+      }
+    }
+
+    for (const pattern of forbiddenDirectAccessPatterns) {
+      if (pattern.test(source)) {
+        violations.push(`${path}: forbidden direct time or randomness access (${pattern})`);
+      }
     }
   }
 
-  for (const pattern of forbiddenDirectAccessPatterns) {
-    if (pattern.test(source)) {
-      violations.push(`${path}: forbidden direct time or randomness access (${pattern})`);
-    }
-  }
+  return violations;
 }
+
+const target = process.argv[2] ? resolve(repositoryRoot, process.argv[2]) : domainRoot;
+const violations = findViolations(target);
 
 if (violations.length > 0) {
   console.error(violations.join("\n"));
