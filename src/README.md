@@ -25,6 +25,7 @@ verdrahtet.
 | `application`          | Anwendungsfälle und Ports                                         | [`README.md`](application/README.md)          |
 | `infrastructure`       | Technische Adapter                                                | [`README.md`](infrastructure/README.md)       |
 | `transport/http`       | HTTP-/JSON-Adapter                                                | [`README.md`](transport/http/README.md)       |
+| `scenario`             | Deterministisches A1-Referenzszenario über HTTP                   | [`README.md`](scenario/README.md)             |
 
 Fachlich relevante Quelldateien verlinken ihre maßgeblichen Dokumente gemäß
 [`docs/SOURCE-CODE.md`](../docs/SOURCE-CODE.md). Issue #1 legt nur die Grenzen

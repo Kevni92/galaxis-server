@@ -25,6 +25,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "smoke:a0": "tsx scripts/smoke-a0.ts",
+    "scenario:a1": "tsx scripts/scenario-a1.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm architecture:check && pnpm build"
   },
   "dependencies": {
