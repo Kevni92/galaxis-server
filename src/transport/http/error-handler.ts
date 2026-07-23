@@ -95,6 +95,7 @@ function statusForDomainError(error: DomainError): number {
   if (error.code === "CAMPAIGN_NOT_FOUND") return 404;
   if (error.code === "CONFLICT") return 409;
   if (error.code === "CAMPAIGN_CREATE_CONFLICT") return 409;
+  if (error.code === "CAMPAIGN_INCOMPATIBLE") return 422;
   return 422;
 }
 
