@@ -13,7 +13,15 @@ import {
   campaignCreationFingerprint,
   type Campaign,
 } from "../../domain/campaigns/campaign.js";
+import {
+  assertEmpireCreationValues,
+  emptyEmpireKnowledge,
+  type Empire,
+  type EmpireController,
+} from "../../domain/empires/empire.js";
 import type { CampaignRepository } from "./ports.js";
+
+const START_EMPIRE_NAME = "Startreich";
 
 export interface CreateCampaignRequest {
   readonly accountId: string;
@@ -99,8 +107,9 @@ export class CampaignService {
       const reason = error instanceof Error ? error.message : "galaxy generation failed";
       throw invalidCreation([{ field: "galaxy", reason }]);
     }
+    const campaignId = this.idGenerator.next("cmp");
     const campaign: Campaign = {
-      id: this.idGenerator.next("cmp"),
+      id: campaignId,
       ownerAccountId: request.accountId,
       type: "singleplayer",
       status: "running",
@@ -116,7 +125,33 @@ export class CampaignService {
       creationFingerprint: campaignCreationFingerprint(request.seed, request.timeProfile.trim()),
     };
 
-    const result = await this.repository.create(campaign);
+    try {
+      assertEmpireCreationValues({
+        campaignId,
+        ownerAccountId: request.accountId,
+        name: START_EMPIRE_NAME,
+      });
+    } catch (error) {
+      const message = error instanceof RangeError ? error.message : "invalid empire values";
+      throw invalidCreation([{ field: "empire", reason: message }]);
+    }
+    const empireId = this.idGenerator.next("emp");
+    const empire: Empire = {
+      id: empireId,
+      campaignId,
+      name: START_EMPIRE_NAME,
+      status: "aktiv",
+      knowledge: emptyEmpireKnowledge(),
+    };
+    const controller: EmpireController = {
+      empireId,
+      accountId: request.accountId,
+      controllerType: "player",
+      canRead: true,
+      canControl: true,
+    };
+
+    const result = await this.repository.create({ campaign, empire, controller });
     if (result.kind === "conflict") {
       throw new ApplicationError(
         "CAMPAIGN_CREATE_CONFLICT",

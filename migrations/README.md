@@ -1,5 +1,8 @@
 # Datenbankmigrationen
 
+`005-create-empires.sql` legt das Startreich, seinen leeren Wissenscontainer und
+die getrennte Controllerzuordnung (Lese- und Befehlsrecht) an.
+
 `004-create-campaigns.sql` legt Kampagnenmetadaten, Besitzerzuordnung,
 Idempotenzschlüssel und Teilnehmerberechtigung atomar an.
 
@@ -19,6 +22,7 @@ angewendet und unverändert sind.
 | ---------------------------------- | -------------------------------------------- |
 | `001-create-schema-migrations.sql` | A0-Migrationsmetadaten ohne Gameplaytabellen |
 | `004-create-campaigns.sql`         | A1-Kampagnen und Teilnehmerzuordnung         |
+| `005-create-empires.sql`           | A1-Startreich und Controllerzuordnung        |
 
 Die Architekturentscheidung steht in
 [`docs/decisions/0005-a0-server-technologiestack.md`](../docs/decisions/0005-a0-server-technologiestack.md).

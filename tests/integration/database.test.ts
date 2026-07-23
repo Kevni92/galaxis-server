@@ -9,6 +9,7 @@ import { GenericContainer, type StartedTestContainer, Wait } from "testcontainer
 
 import { KyselyAccountRepository } from "../../src/infrastructure/accounts/repository.js";
 import { KyselyCampaignRepository } from "../../src/infrastructure/campaigns/repository.js";
+import { KyselyEmpireRepository } from "../../src/infrastructure/empires/repository.js";
 import { KyselySessionRepository } from "../../src/infrastructure/sessions/repository.js";
 import { loadConfig } from "../../src/infrastructure/config/config.js";
 import { createPostgresDatabase } from "../../src/infrastructure/database/database.js";
@@ -57,13 +58,14 @@ describe("PostgreSQL database foundation", () => {
         "SELECT version, name FROM schema_migrations ORDER BY version",
       );
 
-      expect(first.appliedVersions).toEqual([1, 2, 3, 4]);
+      expect(first.appliedVersions).toEqual([1, 2, 3, 4, 5]);
       expect(second.appliedVersions).toEqual([]);
       expect(result.rows).toEqual([
         { version: 1, name: "create-schema-migrations" },
         { version: 2, name: "create-accounts" },
         { version: 3, name: "create-sessions" },
         { version: 4, name: "create-campaigns" },
+        { version: 5, name: "create-empires" },
       ]);
     } finally {
       await pool.end();
@@ -81,6 +83,7 @@ describe("PostgreSQL database foundation", () => {
         "002-create-accounts.sql",
         "003-create-sessions.sql",
         "004-create-campaigns.sql",
+        "005-create-empires.sql",
       ]) {
         await writeFile(
           join(directory, filename),
@@ -89,7 +92,7 @@ describe("PostgreSQL database foundation", () => {
         );
       }
       await writeFile(
-        join(directory, "005-fail.sql"),
+        join(directory, "006-fail.sql"),
         "CREATE TABLE migration_marker (id INTEGER PRIMARY KEY);\nSELECT 1 / 0;\n",
         "utf8",
       );
@@ -99,7 +102,7 @@ describe("PostgreSQL database foundation", () => {
       await expect(
         pool.query("SELECT version FROM schema_migrations ORDER BY version"),
       ).resolves.toMatchObject({
-        rows: [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }],
+        rows: [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }],
       });
     } finally {
       await pool.end();
@@ -210,7 +213,7 @@ describe("PostgreSQL database foundation", () => {
     }
   });
 
-  it("persists a campaign and its participant atomically with idempotency", async ({ skip }) => {
+  it("persists a campaign, its participant, and its start empire atomically", async ({ skip }) => {
     if (connectionString === undefined) return skip();
     const database = createPostgresDatabase(
       loadConfig({
@@ -221,6 +224,7 @@ describe("PostgreSQL database foundation", () => {
     );
     const accountRepository = new KyselyAccountRepository(database.db);
     const campaignRepository = new KyselyCampaignRepository(database.db);
+    const empireRepository = new KyselyEmpireRepository(database.db);
     const campaign = {
       id: "cmp_integration_0001",
       ownerAccountId: "acc_campaign_integration_0001",
@@ -237,6 +241,21 @@ describe("PostgreSQL database foundation", () => {
       creationFingerprint: '[42,"standard"]',
       createdAt: Date.UTC(2026, 0, 2),
     };
+    const empire = {
+      id: "emp_integration_0001",
+      campaignId: campaign.id,
+      name: "Startreich",
+      status: "aktiv" as const,
+      knowledge: { knownSystemIds: [], knownPlanetIds: [] },
+    };
+    const controller = {
+      empireId: empire.id,
+      accountId: campaign.ownerAccountId,
+      controllerType: "player" as const,
+      canRead: true,
+      canControl: true,
+    };
+    const creation = { campaign, empire, controller };
 
     try {
       await accountRepository.create({
@@ -246,13 +265,10 @@ describe("PostgreSQL database foundation", () => {
         createdAt: campaign.createdAt,
       });
 
-      await expect(campaignRepository.create(campaign)).resolves.toMatchObject({ kind: "created" });
-      await expect(campaignRepository.create({ ...campaign, id: "cmp_other_id" })).resolves.toEqual(
-        {
-          kind: "existing",
-          campaign,
-        },
-      );
+      await expect(campaignRepository.create(creation)).resolves.toMatchObject({ kind: "created" });
+      await expect(
+        campaignRepository.create({ ...creation, campaign: { ...campaign, id: "cmp_other_id" } }),
+      ).resolves.toEqual({ kind: "existing", campaign });
       await expect(campaignRepository.listForAccount(campaign.ownerAccountId)).resolves.toEqual([
         campaign,
       ]);
@@ -272,6 +288,22 @@ describe("PostgreSQL database foundation", () => {
           can_control: true,
         },
       ]);
+
+      // Reload erhält Reichsidentität, Zuordnung und leeren Wissenscontainer.
+      await expect(
+        empireRepository.listReadableForAccount(campaign.ownerAccountId, campaign.id),
+      ).resolves.toEqual([{ empire, controller }]);
+      await expect(
+        empireRepository.findReadableForAccount(campaign.ownerAccountId, empire.id),
+      ).resolves.toEqual({ empire, controller });
+
+      // Ein fremder Account steuert oder liest das Startreich nicht.
+      await expect(
+        empireRepository.findReadableForAccount("another-account", empire.id),
+      ).resolves.toBeUndefined();
+      await expect(
+        empireRepository.listReadableForAccount("another-account", campaign.id),
+      ).resolves.toEqual([]);
     } finally {
       await database.close();
     }
