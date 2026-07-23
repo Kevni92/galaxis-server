@@ -6,6 +6,8 @@ import type { Campaign } from "../../src/domain/campaigns/campaign.js";
 import { InMemoryBalancingLoader } from "../../src/infrastructure/balancing/loader.js";
 import { FakeWallClock } from "../../src/infrastructure/runtime/clocks.js";
 import { FakeIdGenerator } from "../../src/infrastructure/runtime/ids.js";
+import { DeterministicGalaxyGenerator } from "../../src/infrastructure/galaxy/generator.js";
+import type { GalaxyGenerator } from "../../src/application/galaxy/ports.js";
 
 const balancingLoader = new InMemoryBalancingLoader({
   schemaVersion: "1.0",
@@ -45,13 +47,17 @@ class FakeCampaignRepository implements CampaignRepository {
   }
 }
 
-function createService(repository = new FakeCampaignRepository()) {
+function createService(
+  repository = new FakeCampaignRepository(),
+  galaxyGenerator: GalaxyGenerator = new DeterministicGalaxyGenerator(),
+) {
   return {
     service: new CampaignService({
       repository,
       balancingLoader,
       idGenerator: new FakeIdGenerator(),
       wallClock: new FakeWallClock(Date.UTC(2026, 0, 2)),
+      galaxyGenerator,
     }),
     repository,
   };
@@ -126,5 +132,25 @@ describe("CampaignService", () => {
     await expect(service.get("other-account", campaign.campaignId)).rejects.toMatchObject({
       code: "CAMPAIGN_NOT_FOUND",
     });
+  });
+
+  it("rejects a failed galaxy generation before repository persistence", async () => {
+    const repository = new FakeCampaignRepository();
+    const galaxyGenerator: GalaxyGenerator = {
+      generate: () => {
+        throw new RangeError("invalid galaxy profile");
+      },
+    };
+    const { service } = createService(repository, galaxyGenerator);
+
+    await expect(
+      service.create({
+        accountId: "acc_owner",
+        seed: 42,
+        timeProfile: "standard",
+        idempotencyKey: "create-1",
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_CAMPAIGN" });
+    await expect(repository.listForAccount("acc_owner")).resolves.toEqual([]);
   });
 });

@@ -1,5 +1,9 @@
 # Infrastructure
 
+Der deterministische Galaxiegenerator liegt unter
+[`galaxy/`](galaxy/README.md) und verwendet den injizierten
+Simulationszufall sowie einen technischen SHA-256-Hash.
+
 Token- und Sessionpersistenz liegen unter [`sessions/`](sessions/README.md).
 
 Kampagnenpersistenz liegt unter [`campaigns/`](campaigns/README.md) und schreibt

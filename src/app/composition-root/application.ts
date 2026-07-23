@@ -28,6 +28,7 @@ import { createLogger, redactedConfig } from "../../infrastructure/logging/logge
 import { SystemWallClock } from "../../infrastructure/runtime/clocks.js";
 import { NodeCryptographicRandomSource } from "../../infrastructure/runtime/random.js";
 import { PrefixedIdGenerator } from "../../infrastructure/runtime/ids.js";
+import { DeterministicGalaxyGenerator } from "../../infrastructure/galaxy/generator.js";
 import { createServer, type ServerDependencies } from "./server.js";
 
 export interface ShutdownResource {
@@ -121,6 +122,7 @@ export function createApplication(
           balancingLoader,
           idGenerator: new PrefixedIdGenerator(new NodeCryptographicRandomSource()),
           wallClock: new SystemWallClock(),
+          galaxyGenerator: new DeterministicGalaxyGenerator(),
         }));
   const serverDependencies: ServerDependencies = {
     logger,
