@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { AccountRegistrationService } from "../../application/accounts/registration.js";
 import { CampaignService } from "../../application/campaigns/service.js";
+import { PopulationService } from "../../application/population/service.js";
 import { SessionService } from "../../application/sessions/service.js";
 import type {
   BalancingLoader,
@@ -12,6 +13,8 @@ import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
 import { KyselyAccountRepository } from "../../infrastructure/accounts/repository.js";
 import { KyselyCampaignRepository } from "../../infrastructure/campaigns/repository.js";
+import { KyselyEmpireRepository } from "../../infrastructure/empires/repository.js";
+import { KyselyStartBaselineRepository } from "../../infrastructure/population/repository.js";
 import {
   Argon2PasswordHasher,
   DUMMY_PASSWORD_HASH,
@@ -42,6 +45,10 @@ export interface ApplicationDependencies {
   readonly database?: PostgresDatabase;
   readonly accountRegistration?: Pick<AccountRegistrationService, "register">;
   readonly campaignService?: Pick<CampaignService, "create" | "list" | "get">;
+  readonly populationService?: Pick<
+    PopulationService,
+    "getPopulationSummary" | "getEconomySummary"
+  >;
   readonly sessionService?: Pick<SessionService, "create" | "current" | "revoke" | "authenticate">;
   readonly resources?: readonly ShutdownResource[];
 }
@@ -124,11 +131,20 @@ export function createApplication(
           wallClock: new SystemWallClock(),
           galaxyGenerator: new DeterministicGalaxyGenerator(),
         }));
+  const populationService =
+    dependencies.populationService ??
+    (database === undefined
+      ? undefined
+      : new PopulationService({
+          empireRepository: new KyselyEmpireRepository(database.db),
+          baselineRepository: new KyselyStartBaselineRepository(database.db),
+        }));
   const serverDependencies: ServerDependencies = {
     logger,
     ...(readinessProbe === undefined ? {} : { readinessProbe }),
     ...(accountRegistration === undefined ? {} : { accountRegistration }),
     ...(campaignService === undefined ? {} : { campaignService }),
+    ...(populationService === undefined ? {} : { populationService }),
     ...(sessionService === undefined ? {} : { sessionService }),
   };
   const server = createServer(config, serverDependencies);

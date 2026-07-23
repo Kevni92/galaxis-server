@@ -92,6 +92,28 @@ export interface ColonyTable {
   specialization: "neutral";
 }
 
+export interface PopulationGroupTable {
+  id: Generated<number>;
+  population_group_id: string;
+  campaign_id: string;
+  colony_id: string;
+  origin: "neutral";
+  total: number;
+  employable: number;
+  employed: number;
+}
+
+export interface ColonyStockTable {
+  id: Generated<number>;
+  stock_id: string;
+  campaign_id: string;
+  colony_id: string;
+  resource_category: "essential";
+  quantity: number;
+  reserved: number;
+  coverage_days: number;
+}
+
 export interface DatabaseSchema {
   accounts: AccountTable;
   sessions: SessionTable;
@@ -101,6 +123,8 @@ export interface DatabaseSchema {
   empire_controllers: EmpireControllerTable;
   planets: PlanetTable;
   colonies: ColonyTable;
+  population_groups: PopulationGroupTable;
+  colony_stocks: ColonyStockTable;
 }
 
 export interface PostgresDatabase {

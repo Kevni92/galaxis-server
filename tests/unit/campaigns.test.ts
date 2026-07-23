@@ -19,8 +19,14 @@ const balancingLoader = new InMemoryBalancingLoader({
   status: "baseline",
   effectiveFrom: "new_campaigns",
   sources: ["test"],
-  units: ["campaign_seconds"],
-  parameters: {},
+  units: ["campaign_days", "population_units", "basis_points", "quantity_milliunits"],
+  parameters: {
+    start_population_total: { value: 1000, unit: "population_units" },
+    start_population_employable_share: { value: 6000, unit: "basis_points" },
+    start_employment_share: { value: 9400, unit: "basis_points" },
+    essential_reserve_target_days: { value: 7, unit: "campaign_days" },
+    essential_daily_consumption_per_pop: { value: 1000, unit: "quantity_milliunits" },
+  },
 });
 
 class FakeCampaignRepository implements CampaignRepository {
@@ -162,6 +168,68 @@ describe("CampaignService", () => {
       knownSystemIds: [creation?.colony.systemId],
       knownPlanetIds: [creation?.colony.planetId],
     });
+  });
+
+  it("derives the start population and essential supply baseline from balancing data", async () => {
+    const { service, repository } = createService();
+
+    const campaign = await service.create({
+      accountId: "acc_owner",
+      seed: 42,
+      timeProfile: "standard",
+      idempotencyKey: "create-1",
+    });
+
+    const creation = repository.creations[0];
+    // 1000 Einwohner, 60 % erwerbsfähig, davon 94 % beschäftigt: geschachtelte Teilmengen.
+    expect(creation?.populationGroup).toEqual({
+      id: "pop_fake_0001",
+      campaignId: campaign.campaignId,
+      colonyId: "col_fake_0001",
+      origin: "neutral",
+      total: 1000,
+      employable: 600,
+      employed: 564,
+    });
+    // Reserve = Bevölkerung × Tagesbedarf × Reservetage = 1000 × 1000 × 7.
+    expect(creation?.essentialSupplyStock).toEqual({
+      id: "stk_fake_0001",
+      campaignId: campaign.campaignId,
+      colonyId: "col_fake_0001",
+      quantity: 7_000_000,
+      reserved: 0,
+      coverageDays: 7,
+    });
+  });
+
+  it("rejects a start baseline whose balancing parameters are missing", async () => {
+    const repository = new FakeCampaignRepository();
+    const service = new CampaignService({
+      repository,
+      balancingLoader: new InMemoryBalancingLoader({
+        schemaVersion: "1.0",
+        balancingVersion: "0.1.0-baseline",
+        catalogVersion: "0.1.0-baseline",
+        status: "baseline",
+        effectiveFrom: "new_campaigns",
+        sources: ["test"],
+        units: ["campaign_seconds"],
+        parameters: {},
+      }),
+      idGenerator: new FakeIdGenerator(),
+      wallClock: new FakeWallClock(Date.UTC(2026, 0, 2)),
+      galaxyGenerator: new DeterministicGalaxyGenerator(),
+    });
+
+    await expect(
+      service.create({
+        accountId: "acc_owner",
+        seed: 42,
+        timeProfile: "standard",
+        idempotencyKey: "create-1",
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_CAMPAIGN" });
+    await expect(repository.listForAccount("acc_owner")).resolves.toEqual([]);
   });
 
   it("does not create a second empire on an idempotent retry", async () => {

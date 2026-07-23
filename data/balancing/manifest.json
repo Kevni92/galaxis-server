@@ -6,8 +6,57 @@
   "effectiveFrom": "new_campaigns",
   "sources": [
     "docs/balancing/data-format.md",
-    "docs/decisions/0004-versionierte-balancing-schicht.md"
+    "docs/decisions/0004-versionierte-balancing-schicht.md",
+    "docs/balancing/domains/population-and-employment.md",
+    "docs/balancing/domains/economy-and-supply.md",
+    "docs/balancing/baseline.md"
   ],
-  "units": ["campaign_seconds", "campaign_days", "probability_ppm"],
-  "parameters": {}
+  "units": [
+    "campaign_seconds",
+    "campaign_days",
+    "probability_ppm",
+    "population_units",
+    "basis_points",
+    "quantity_milliunits"
+  ],
+  "parameters": {
+    "start_population_total": {
+      "value": 1000,
+      "unit": "population_units",
+      "minimum": 1,
+      "description": "Aggregierte Startbevölkerung der etablierten Heimatkolonie",
+      "sourceSection": "Populationsdarstellung"
+    },
+    "start_population_employable_share": {
+      "value": 6000,
+      "unit": "basis_points",
+      "minimum": 0,
+      "maximum": 10000,
+      "description": "Anteil der Startbevölkerung, der als erwerbsfähig gilt",
+      "sourceSection": "Arbeitskräfte"
+    },
+    "start_employment_share": {
+      "value": 9400,
+      "unit": "basis_points",
+      "minimum": 0,
+      "maximum": 10000,
+      "description": "Beschäftigter Anteil der erwerbsfähigen Startbevölkerung (Zielkorridor 90–98 %)",
+      "sourceSection": "Arbeitskräfte"
+    },
+    "essential_reserve_target_days": {
+      "value": 7,
+      "unit": "campaign_days",
+      "minimum": 0,
+      "maximum": 60,
+      "description": "Startreserve essentieller Grundversorgung in Versorgungstagen",
+      "sourceSection": "Startwirtschaft"
+    },
+    "essential_daily_consumption_per_pop": {
+      "value": 1000,
+      "unit": "quantity_milliunits",
+      "minimum": 0,
+      "description": "Essentieller Grundversorgungsbedarf je Populationseinheit und Kampagnentag",
+      "sourceSection": "Startwirtschaft"
+    }
+  }
 }

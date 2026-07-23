@@ -1,10 +1,11 @@
-// Feature: GAL-CAMPAIGN-CREATE-001, GAL-GALAXY-GENERATE-001, GAL-COLONY-HOME-001
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-GALAXY-GENERATE-001, GAL-COLONY-HOME-001, GAL-POP-START-001
 // Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md, docs/docs/02-galaxy/galaxiestruktur-und-generierung.md
-// Fachliche Grundlage: docs/docs/04-planets/planeten-und-kolonien.md
+// Fachliche Grundlage: docs/docs/04-planets/planeten-und-kolonien.md, docs/docs/05-population/bevoelkerung-und-arbeit.md
 // REST-Vertrag: docs/contracts/rest-api/galaxis-rest-v1.md
 
 import { ApplicationError } from "../errors.js";
-import type { BalancingLoader } from "../balancing/loader.js";
+import type { BalancingLoader, LoadedBalancingConfiguration } from "../balancing/loader.js";
+import { buildStartBaseline, type StartBaseline } from "../population/start-baseline.js";
 import type { WallClock } from "../runtime/clock.js";
 import type { IdGenerator } from "../runtime/ids.js";
 import {
@@ -161,6 +162,7 @@ export class CampaignService {
     }
     const empireId = this.idGenerator.next("emp");
     const { planet, colony } = this.buildHomeColony(campaignId, empireId, galaxy);
+    const baseline = this.buildStartBaseline(balancing, campaignId, colony.id);
     const empire: Empire = {
       id: empireId,
       campaignId,
@@ -177,7 +179,15 @@ export class CampaignService {
       canControl: true,
     };
 
-    const result = await this.repository.create({ campaign, empire, controller, planet, colony });
+    const result = await this.repository.create({
+      campaign,
+      empire,
+      controller,
+      planet,
+      colony,
+      populationGroup: baseline.populationGroup,
+      essentialSupplyStock: baseline.essentialSupplyStock,
+    });
     if (result.kind === "conflict") {
       throw new ApplicationError(
         "CAMPAIGN_CREATE_CONFLICT",
@@ -234,6 +244,24 @@ export class CampaignService {
     }
 
     return { planet, colony };
+  }
+
+  /**
+   * Leitet die Startbaseline für Bevölkerung und Grundversorgung ausschließlich aus den
+   * versionierten Balancingwerten ab. Fehlen Werte oder verletzen sie eine Erhaltungs-
+   * oder Einheitenregel, wird die Kampagne vor jeder Persistenz abgelehnt.
+   */
+  private buildStartBaseline(
+    balancing: LoadedBalancingConfiguration,
+    campaignId: string,
+    colonyId: string,
+  ): StartBaseline {
+    try {
+      return buildStartBaseline(balancing, { campaignId, colonyId }, this.idGenerator);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "invalid start baseline";
+      throw invalidCreation([{ field: "population", reason }]);
+    }
   }
 
   public async list(accountId: string): Promise<readonly CampaignResponse[]> {
