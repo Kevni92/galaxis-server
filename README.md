@@ -4,7 +4,11 @@ Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.
 
-## Status: A0 / GAL-QUALITY-CI-001
+## Status: A1 / GAL-CAMPAIGN-CREATE-001
+
+Issue #12 ergänzt idempotente Singleplayer-Kampagnen mit Seed, Zeitprofil,
+versionierten Balancingmetadaten, Besitzerteilnehmer und geschützten
+Create/List/Get-Routen.
 
 Issue #11 vervollständigt die reproduzierbare lokale A0-Umgebung, das Linux-CI-
 Qualitätsgate und den vollständigen A0-Smoke-Ablauf.
@@ -29,7 +33,7 @@ Korrelations-ID, sicheren Fehlerantworten sowie konfigurierbaren HTTP-Grenzen.
 Issue #3 ergänzt die baubare Basis um strikt validierte Runtime-Konfiguration,
 strukturiertes Pino-Logging, technische Health-Endpunkte und einen kontrollierten
 Shutdown-Lifecycle. Es gibt weiterhin keine Datenbanktabellen,
-Authentifizierung, Kampagnen oder Gameplaylogik.
+Kampagnenstart, Startgalaxie und Gameplaylogik folgen in den A1-Issues.
 
 ## Verbindlicher Stack
 
@@ -45,7 +49,7 @@ Authentifizierung, Kampagnen oder Gameplaylogik.
 Die installierbaren Abhängigkeiten und Versionen sind in
 [`package.json`](package.json) und [`pnpm-lock.yaml`](pnpm-lock.yaml) festgelegt.
 Der Entrypoint startet eine kleine Fastify-Anwendung. Fachliche und produktive
-HTTP-Module folgen in späteren A0-Issues.
+Weitere fachliche HTTP-Module folgen in den A1-Issues.
 
 ## Frischer Checkout
 
@@ -143,7 +147,8 @@ Die TypeScript-Compilergrenzen stehen in [`tsconfig.json`](tsconfig.json) und
 
 ## Repository-Navigation
 
-Die Migrationen `001` bis `003` bilden Metadaten, Accounts und Bearer-Sessions;
+Die Migrationen `001` bis `004` bilden Metadaten, Accounts, Bearer-Sessions und
+Kampagnen mit Teilnehmerzuordnung;
 die Auth-Routen sind unter `src/transport/http/` navigierbar.
 
 - [`src/`](src/README.md) – Produktionsmodule und ihre Abhängigkeiten

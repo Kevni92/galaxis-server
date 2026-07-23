@@ -1,5 +1,8 @@
 # Datenbankmigrationen
 
+`004-create-campaigns.sql` legt Kampagnenmetadaten, Besitzerzuordnung,
+Idempotenzschlüssel und Teilnehmerberechtigung atomar an.
+
 `003-create-sessions.sql` legt Session-ID, Accountbezug, Tokenhash, Ablauf,
 `last_used_at` und Widerrufszeitpunkt an.
 
@@ -15,6 +18,7 @@ angewendet und unverändert sind.
 | Datei                              | Verantwortung                                |
 | ---------------------------------- | -------------------------------------------- |
 | `001-create-schema-migrations.sql` | A0-Migrationsmetadaten ohne Gameplaytabellen |
+| `004-create-campaigns.sql`         | A1-Kampagnen und Teilnehmerzuordnung         |
 
 Die Architekturentscheidung steht in
 [`docs/decisions/0005-a0-server-technologiestack.md`](../docs/decisions/0005-a0-server-technologiestack.md).

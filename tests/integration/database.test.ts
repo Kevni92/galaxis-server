@@ -8,6 +8,7 @@ import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { GenericContainer, type StartedTestContainer, Wait } from "testcontainers";
 
 import { KyselyAccountRepository } from "../../src/infrastructure/accounts/repository.js";
+import { KyselyCampaignRepository } from "../../src/infrastructure/campaigns/repository.js";
 import { KyselySessionRepository } from "../../src/infrastructure/sessions/repository.js";
 import { loadConfig } from "../../src/infrastructure/config/config.js";
 import { createPostgresDatabase } from "../../src/infrastructure/database/database.js";
@@ -56,12 +57,13 @@ describe("PostgreSQL database foundation", () => {
         "SELECT version, name FROM schema_migrations ORDER BY version",
       );
 
-      expect(first.appliedVersions).toEqual([1, 2, 3]);
+      expect(first.appliedVersions).toEqual([1, 2, 3, 4]);
       expect(second.appliedVersions).toEqual([]);
       expect(result.rows).toEqual([
         { version: 1, name: "create-schema-migrations" },
         { version: 2, name: "create-accounts" },
         { version: 3, name: "create-sessions" },
+        { version: 4, name: "create-campaigns" },
       ]);
     } finally {
       await pool.end();
@@ -78,6 +80,7 @@ describe("PostgreSQL database foundation", () => {
         "001-create-schema-migrations.sql",
         "002-create-accounts.sql",
         "003-create-sessions.sql",
+        "004-create-campaigns.sql",
       ]) {
         await writeFile(
           join(directory, filename),
@@ -86,7 +89,7 @@ describe("PostgreSQL database foundation", () => {
         );
       }
       await writeFile(
-        join(directory, "004-fail.sql"),
+        join(directory, "005-fail.sql"),
         "CREATE TABLE migration_marker (id INTEGER PRIMARY KEY);\nSELECT 1 / 0;\n",
         "utf8",
       );
@@ -96,7 +99,7 @@ describe("PostgreSQL database foundation", () => {
       await expect(
         pool.query("SELECT version FROM schema_migrations ORDER BY version"),
       ).resolves.toMatchObject({
-        rows: [{ version: 1 }, { version: 2 }, { version: 3 }],
+        rows: [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }],
       });
     } finally {
       await pool.end();
@@ -202,6 +205,73 @@ describe("PostgreSQL database foundation", () => {
       );
       expect(result.rows).toEqual([{ token_hash: session.tokenHash }]);
       expect(result.rows[0]?.token_hash).not.toBe("galaxis_session_opaque_token");
+    } finally {
+      await database.close();
+    }
+  });
+
+  it("persists a campaign and its participant atomically with idempotency", async ({ skip }) => {
+    if (connectionString === undefined) return skip();
+    const database = createPostgresDatabase(
+      loadConfig({
+        GALAXIS_PORT: "3000",
+        GALAXIS_LOG_LEVEL: "silent",
+        GALAXIS_DATABASE_URL: connectionString,
+      }),
+    );
+    const accountRepository = new KyselyAccountRepository(database.db);
+    const campaignRepository = new KyselyCampaignRepository(database.db);
+    const campaign = {
+      id: "cmp_integration_0001",
+      ownerAccountId: "acc_campaign_integration_0001",
+      type: "singleplayer" as const,
+      status: "running" as const,
+      seed: 42,
+      timeProfile: "standard",
+      balancingVersion: "0.1.0-baseline",
+      catalogVersion: "0.1.0-baseline",
+      balancingHash: "b".repeat(64),
+      stateVersion: 1,
+      campaignTimeMs: 0,
+      idempotencyKey: "create-1",
+      creationFingerprint: '[42,"standard"]',
+      createdAt: Date.UTC(2026, 0, 2),
+    };
+
+    try {
+      await accountRepository.create({
+        id: campaign.ownerAccountId,
+        email: "campaign-integration@example.com",
+        passwordHash: "$argon2id$v=19$test-hash",
+        createdAt: campaign.createdAt,
+      });
+
+      await expect(campaignRepository.create(campaign)).resolves.toMatchObject({ kind: "created" });
+      await expect(campaignRepository.create({ ...campaign, id: "cmp_other_id" })).resolves.toEqual(
+        {
+          kind: "existing",
+          campaign,
+        },
+      );
+      await expect(campaignRepository.listForAccount(campaign.ownerAccountId)).resolves.toEqual([
+        campaign,
+      ]);
+      await expect(
+        campaignRepository.findForAccount("another-account", campaign.id),
+      ).resolves.toBeUndefined();
+
+      const participant = await database.pool.query(
+        "SELECT account_id, participant_role, can_read, can_control FROM campaign_participants WHERE campaign_id = $1",
+        [campaign.id],
+      );
+      expect(participant.rows).toEqual([
+        {
+          account_id: campaign.ownerAccountId,
+          participant_role: "owner",
+          can_read: true,
+          can_control: true,
+        },
+      ]);
     } finally {
       await database.close();
     }

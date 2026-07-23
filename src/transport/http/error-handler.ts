@@ -85,13 +85,16 @@ function isFastifyError(error: unknown): error is {
 
 function statusForDomainError(error: DomainError): number {
   if (error.code === "ACCOUNT_REGISTRATION_REJECTED") return 400;
+  if (error.code === "INVALID_CAMPAIGN") return 400;
   if (error.code === "RATE_LIMITED") return 429;
   if (error.code === "AUTHENTICATION_FAILED") return 401;
   if (error.code === "SESSION_INVALID") return 401;
   if (error.code === "UNAUTHORIZED") return 401;
   if (error.code === "FORBIDDEN") return 403;
   if (error.code === "RESOURCE_NOT_FOUND") return 404;
+  if (error.code === "CAMPAIGN_NOT_FOUND") return 404;
   if (error.code === "CONFLICT") return 409;
+  if (error.code === "CAMPAIGN_CREATE_CONFLICT") return 409;
   return 422;
 }
 
