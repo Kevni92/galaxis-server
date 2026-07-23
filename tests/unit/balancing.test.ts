@@ -121,13 +121,23 @@ describe("versioned balancing loader", () => {
     }
   });
 
-  it("loads the committed A0 manifest through the filesystem adapter", async () => {
+  it("loads the committed manifest with the seeded start-baseline parameters", async () => {
     const path = fileURLToPath(new URL("../../data/balancing/manifest.json", import.meta.url));
     const loaded = await new FileSystemBalancingLoader(path).load();
 
     expect(loaded.balancingVersion).toBe("0.1.0-baseline");
     expect(loaded.catalogVersion).toBe("0.1.0-baseline");
-    expect(loaded.parameters).toEqual({});
+    expect(Object.keys(loaded.parameters).sort()).toEqual([
+      "essential_daily_consumption_per_pop",
+      "essential_reserve_target_days",
+      "start_employment_share",
+      "start_population_employable_share",
+      "start_population_total",
+    ]);
+    expect(loaded.parameters.start_population_total).toMatchObject({
+      value: 1000,
+      unit: "population_units",
+    });
   });
 
   it("loads balancing before listening and exposes its versioned status", async () => {
@@ -147,15 +157,19 @@ describe("versioned balancing loader", () => {
     }
   });
 
-  it("uses the committed A0 manifest when no loader override is supplied", async () => {
+  it("uses the committed manifest when no loader override is supplied", async () => {
     const application = createApplication(
       loadConfig({ GALAXIS_PORT: "3000", GALAXIS_LOG_LEVEL: "silent" }),
     );
 
     await application.start();
     try {
-      expect(application.balancingConfiguration?.parameters).toEqual({});
-      expect(application.balancingConfiguration?.hash).toMatch(/^[0-9a-f]{64}$/u);
+      expect(Object.keys(application.balancingConfiguration?.parameters ?? {})).toContain(
+        "start_population_total",
+      );
+      expect(application.balancingConfiguration?.hash).toBe(
+        "82d6882e8903c56170ac0f1b29d6a0cf77da11d1a8fbe154033497de2c654696",
+      );
     } finally {
       await application.shutdown("test");
     }

@@ -1,11 +1,16 @@
-// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001, GAL-COLONY-HOME-001
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001, GAL-COLONY-HOME-001, GAL-POP-START-001
 // Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md
 // Fachliche Grundlage: docs/docs/03-empires/reichsverwaltung.md
 // Fachliche Grundlage: docs/docs/04-planets/planeten-und-kolonien.md
+// Fachliche Grundlage: docs/docs/05-population/bevoelkerung-und-arbeit.md
 
 import type { Campaign } from "../../domain/campaigns/campaign.js";
 import type { Empire, EmpireController } from "../../domain/empires/empire.js";
 import type { Colony, HomePlanet } from "../../domain/colonies/colony.js";
+import type {
+  EssentialSupplyStock,
+  PopulationGroup,
+} from "../../domain/population/start-baseline.js";
 
 export interface CampaignCreation {
   readonly campaign: Campaign;
@@ -13,6 +18,8 @@ export interface CampaignCreation {
   readonly controller: EmpireController;
   readonly planet: HomePlanet;
   readonly colony: Colony;
+  readonly populationGroup: PopulationGroup;
+  readonly essentialSupplyStock: EssentialSupplyStock;
 }
 
 export type CampaignCreateResult =

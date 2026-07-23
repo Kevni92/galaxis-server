@@ -18,6 +18,10 @@ Controllerzuordnung (siehe [`empires/README.md`](empires/README.md)).
 aktive, neutrale Heimatkolonie mit ihren Konsistenzinvarianten (siehe
 [`colonies/README.md`](colonies/README.md)).
 
+[`population/start-baseline.ts`](population/start-baseline.ts) beschreibt die
+aggregierte Startbevölkerungsgruppe und den essentiellen Startbestand mit ihren
+Erhaltungs- und Einheitenregeln (siehe [`population/README.md`](population/README.md)).
+
 Die lokale Accountregistrierung verwendet [`accounts/account.ts`](accounts/account.ts)
 für ein normalisiertes, technikfreies Accountmodell.
 

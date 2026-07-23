@@ -4,6 +4,10 @@
 Kampagnenoperationen für Erstellen, Auflisten und Einzelabfrage. Der
 `Idempotency-Key`-Header wird unverändert an die Application-Schicht übergeben.
 
+[`population-routes.ts`](population-routes.ts) registriert die geschützten,
+wissensgefilterten Lesezusammenfassungen `GET .../empires/{empireId}/population`
+und `.../economy` der Heimatkolonie.
+
 [`session-routes.ts`](session-routes.ts) registriert die drei Bearer-Sessionrouten;
 [`auth-hook.ts`](auth-hook.ts) stellt bestätigte Identität für geschützte Routen bereit.
 

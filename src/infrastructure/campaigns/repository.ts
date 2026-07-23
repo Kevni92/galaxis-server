@@ -1,7 +1,8 @@
-// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001, GAL-COLONY-HOME-001
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001, GAL-COLONY-HOME-001, GAL-POP-START-001
 // Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md
 // Fachliche Grundlage: docs/docs/03-empires/reichsverwaltung.md
 // Fachliche Grundlage: docs/docs/04-planets/planeten-und-kolonien.md
+// Fachliche Grundlage: docs/docs/05-population/bevoelkerung-und-arbeit.md
 // Architekturentscheidung: docs/decisions/0001-asynchrones-kampagnen-und-controller-grundmodell.md
 
 import type { Kysely } from "kysely";
@@ -14,6 +15,10 @@ import type {
 import type { Campaign } from "../../domain/campaigns/campaign.js";
 import type { Empire, EmpireController } from "../../domain/empires/empire.js";
 import type { Colony, HomePlanet } from "../../domain/colonies/colony.js";
+import type {
+  EssentialSupplyStock,
+  PopulationGroup,
+} from "../../domain/population/start-baseline.js";
 import type { CampaignTable, DatabaseSchema } from "../database/database.js";
 
 export class KyselyCampaignRepository implements CampaignRepository {
@@ -24,7 +29,8 @@ export class KyselyCampaignRepository implements CampaignRepository {
   }
 
   public async create(creation: CampaignCreation): Promise<CampaignCreateResult> {
-    const { campaign, empire, controller, planet, colony } = creation;
+    const { campaign, empire, controller, planet, colony, populationGroup, essentialSupplyStock } =
+      creation;
     return this.database.transaction().execute(async (transaction) => {
       const inserted = await transaction
         .insertInto("campaigns")
@@ -54,6 +60,14 @@ export class KyselyCampaignRepository implements CampaignRepository {
           .execute();
         await transaction.insertInto("planets").values(toPlanetRow(planet)).execute();
         await transaction.insertInto("colonies").values(toColonyRow(colony)).execute();
+        await transaction
+          .insertInto("population_groups")
+          .values(toPopulationGroupRow(populationGroup))
+          .execute();
+        await transaction
+          .insertInto("colony_stocks")
+          .values(toColonyStockRow(essentialSupplyStock))
+          .execute();
         return { kind: "created", campaign };
       }
 
@@ -202,6 +216,46 @@ function toColonyRow(colony: Colony): {
     is_home_colony: colony.isHomeColony,
     lifecycle_state: colony.lifecycleState,
     specialization: colony.specialization,
+  };
+}
+
+function toPopulationGroupRow(group: PopulationGroup): {
+  population_group_id: string;
+  campaign_id: string;
+  colony_id: string;
+  origin: PopulationGroup["origin"];
+  total: number;
+  employable: number;
+  employed: number;
+} {
+  return {
+    population_group_id: group.id,
+    campaign_id: group.campaignId,
+    colony_id: group.colonyId,
+    origin: group.origin,
+    total: group.total,
+    employable: group.employable,
+    employed: group.employed,
+  };
+}
+
+function toColonyStockRow(stock: EssentialSupplyStock): {
+  stock_id: string;
+  campaign_id: string;
+  colony_id: string;
+  resource_category: "essential";
+  quantity: number;
+  reserved: number;
+  coverage_days: number;
+} {
+  return {
+    stock_id: stock.id,
+    campaign_id: stock.campaignId,
+    colony_id: stock.colonyId,
+    resource_category: "essential",
+    quantity: stock.quantity,
+    reserved: stock.reserved,
+    coverage_days: stock.coverageDays,
   };
 }
 

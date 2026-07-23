@@ -11,6 +11,7 @@ import { KyselyAccountRepository } from "../../src/infrastructure/accounts/repos
 import { KyselyCampaignRepository } from "../../src/infrastructure/campaigns/repository.js";
 import { KyselyEmpireRepository } from "../../src/infrastructure/empires/repository.js";
 import { KyselyColonyRepository } from "../../src/infrastructure/colonies/repository.js";
+import { KyselyStartBaselineRepository } from "../../src/infrastructure/population/repository.js";
 import { KyselySessionRepository } from "../../src/infrastructure/sessions/repository.js";
 import { loadConfig } from "../../src/infrastructure/config/config.js";
 import { createPostgresDatabase } from "../../src/infrastructure/database/database.js";
@@ -59,7 +60,7 @@ describe("PostgreSQL database foundation", () => {
         "SELECT version, name FROM schema_migrations ORDER BY version",
       );
 
-      expect(first.appliedVersions).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(first.appliedVersions).toEqual([1, 2, 3, 4, 5, 6, 7]);
       expect(second.appliedVersions).toEqual([]);
       expect(result.rows).toEqual([
         { version: 1, name: "create-schema-migrations" },
@@ -68,6 +69,7 @@ describe("PostgreSQL database foundation", () => {
         { version: 4, name: "create-campaigns" },
         { version: 5, name: "create-empires" },
         { version: 6, name: "create-home-colonies" },
+        { version: 7, name: "create-start-population" },
       ]);
     } finally {
       await pool.end();
@@ -87,6 +89,7 @@ describe("PostgreSQL database foundation", () => {
         "004-create-campaigns.sql",
         "005-create-empires.sql",
         "006-create-home-colonies.sql",
+        "007-create-start-population.sql",
       ]) {
         await writeFile(
           join(directory, filename),
@@ -95,7 +98,7 @@ describe("PostgreSQL database foundation", () => {
         );
       }
       await writeFile(
-        join(directory, "007-fail.sql"),
+        join(directory, "008-fail.sql"),
         "CREATE TABLE migration_marker (id INTEGER PRIMARY KEY);\nSELECT 1 / 0;\n",
         "utf8",
       );
@@ -112,6 +115,7 @@ describe("PostgreSQL database foundation", () => {
           { version: 4 },
           { version: 5 },
           { version: 6 },
+          { version: 7 },
         ],
       });
     } finally {
@@ -236,6 +240,7 @@ describe("PostgreSQL database foundation", () => {
     const campaignRepository = new KyselyCampaignRepository(database.db);
     const empireRepository = new KyselyEmpireRepository(database.db);
     const colonyRepository = new KyselyColonyRepository(database.db);
+    const baselineRepository = new KyselyStartBaselineRepository(database.db);
     const campaign = {
       id: "cmp_integration_0001",
       ownerAccountId: "acc_campaign_integration_0001",
@@ -284,7 +289,32 @@ describe("PostgreSQL database foundation", () => {
       lifecycleState: "etabliert" as const,
       specialization: "neutral" as const,
     };
-    const creation = { campaign, empire, controller, planet, colony };
+    const populationGroup = {
+      id: "pop_integration_0001",
+      campaignId: campaign.id,
+      colonyId: colony.id,
+      origin: "neutral" as const,
+      total: 1000,
+      employable: 600,
+      employed: 564,
+    };
+    const essentialSupplyStock = {
+      id: "stk_integration_0001",
+      campaignId: campaign.id,
+      colonyId: colony.id,
+      quantity: 7_000_000,
+      reserved: 0,
+      coverageDays: 7,
+    };
+    const creation = {
+      campaign,
+      empire,
+      controller,
+      planet,
+      colony,
+      populationGroup,
+      essentialSupplyStock,
+    };
 
     try {
       await accountRepository.create({
@@ -343,6 +373,16 @@ describe("PostgreSQL database foundation", () => {
         [empire.id],
       );
       expect(homeColonyCount.rows).toEqual([{ total: 1 }]);
+
+      // Startbaseline aus Bevölkerung und essentiellem Bestand bleibt nach Reload identisch.
+      await expect(
+        baselineRepository.findHomeColonyBaseline(campaign.id, empire.id),
+      ).resolves.toEqual({
+        colonyId: colony.id,
+        systemId: colony.systemId,
+        populationGroup,
+        essentialSupplyStock,
+      });
     } finally {
       await database.close();
     }
