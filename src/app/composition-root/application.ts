@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { AccountRegistrationService } from "../../application/accounts/registration.js";
 import { CampaignService } from "../../application/campaigns/service.js";
+import { CampaignPersistenceService } from "../../application/campaigns/persistence.js";
 import { PopulationService } from "../../application/population/service.js";
 import { StateQueryService } from "../../application/state/service.js";
 import { SessionService } from "../../application/sessions/service.js";
@@ -14,6 +15,7 @@ import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
 import { KyselyAccountRepository } from "../../infrastructure/accounts/repository.js";
 import { KyselyCampaignRepository } from "../../infrastructure/campaigns/repository.js";
+import { KyselyCampaignStateStore } from "../../infrastructure/campaigns/state-store.js";
 import { KyselyEmpireRepository } from "../../infrastructure/empires/repository.js";
 import { KyselyColonyRepository } from "../../infrastructure/colonies/repository.js";
 import { KyselyStartBaselineRepository } from "../../infrastructure/population/repository.js";
@@ -64,6 +66,7 @@ export interface ServerApplication {
   readonly server: ReturnType<typeof createServer>;
   readonly database: PostgresDatabase | undefined;
   readonly balancingConfiguration: LoadedBalancingConfiguration | undefined;
+  readonly campaignPersistence: CampaignPersistenceService | undefined;
   start(): Promise<void>;
   shutdown(reason?: string): Promise<void>;
 }
@@ -155,6 +158,13 @@ export function createApplication(
           colonyRepository: new KyselyColonyRepository(database.db),
           galaxyGenerator: new DeterministicGalaxyGenerator(),
         }));
+  const campaignPersistence =
+    database === undefined
+      ? undefined
+      : new CampaignPersistenceService({
+          stateStore: new KyselyCampaignStateStore(database.db),
+          balancingLoader,
+        });
   const serverDependencies: ServerDependencies = {
     logger,
     ...(readinessProbe === undefined ? {} : { readinessProbe }),
@@ -227,6 +237,7 @@ export function createApplication(
     logger,
     server,
     database,
+    campaignPersistence,
     get balancingConfiguration() {
       return balancingConfiguration;
     },

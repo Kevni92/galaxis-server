@@ -9,6 +9,7 @@ import { GenericContainer, type StartedTestContainer, Wait } from "testcontainer
 
 import { KyselyAccountRepository } from "../../src/infrastructure/accounts/repository.js";
 import { KyselyCampaignRepository } from "../../src/infrastructure/campaigns/repository.js";
+import { KyselyCampaignStateStore } from "../../src/infrastructure/campaigns/state-store.js";
 import { KyselyEmpireRepository } from "../../src/infrastructure/empires/repository.js";
 import { KyselyColonyRepository } from "../../src/infrastructure/colonies/repository.js";
 import { KyselyStartBaselineRepository } from "../../src/infrastructure/population/repository.js";
@@ -409,6 +410,65 @@ describe("PostgreSQL database foundation", () => {
            VALUES ('col_second_0001', 'cmp_integration_0001', 'emp_integration_0001', 'pln_second_0001', 'sys_0002', true, 'etabliert', 'neutral')`,
         ),
       ).rejects.toThrow();
+    } finally {
+      await database.close();
+    }
+  });
+
+  it("applies atomic state changes and reconstructs the snapshot after a restart", async ({
+    skip,
+  }) => {
+    if (connectionString === undefined) return skip();
+    const database = createPostgresDatabase(
+      loadConfig({
+        GALAXIS_PORT: "3000",
+        GALAXIS_LOG_LEVEL: "silent",
+        GALAXIS_DATABASE_URL: connectionString,
+      }),
+    );
+    const store = new KyselyCampaignStateStore(database.db);
+    const campaignId = "cmp_integration_0001";
+
+    try {
+      const before = await store.loadSnapshot(campaignId);
+      expect(before?.campaign.stateVersion).toBe(1);
+
+      // Erfolgreiche atomare Änderung erhöht die Version um genau eins.
+      await expect(store.applyStateChange(campaignId, 1)).resolves.toEqual({
+        kind: "applied",
+        stateVersion: 2,
+      });
+
+      // Ein überholter Erwartungswert erzeugt einen Konflikt statt einer Änderung.
+      await expect(store.applyStateChange(campaignId, 1)).resolves.toEqual({
+        kind: "conflict",
+        currentStateVersion: 2,
+      });
+
+      // Unbekannte Kampagne meldet not_found.
+      await expect(store.applyStateChange("cmp_missing_0001", 1)).resolves.toEqual({
+        kind: "not_found",
+      });
+
+      // "Neustart": ein frischer Store liefert denselben sichtbaren Zustand mit Version 2.
+      const restartDatabase = createPostgresDatabase(
+        loadConfig({
+          GALAXIS_PORT: "3000",
+          GALAXIS_LOG_LEVEL: "silent",
+          GALAXIS_DATABASE_URL: connectionString,
+        }),
+      );
+      try {
+        const restartStore = new KyselyCampaignStateStore(restartDatabase.db);
+        const reloaded = await restartStore.loadSnapshot(campaignId);
+        expect(reloaded?.campaign.stateVersion).toBe(2);
+        expect(reloaded?.colony.isHomeColony).toBe(true);
+        expect(reloaded?.populationGroup.total).toBe(1000);
+        expect(reloaded?.essentialSupplyStock.coverageDays).toBe(7);
+        expect(reloaded?.empire.knowledge.knownSystemIds).toEqual(["sys_0001"]);
+      } finally {
+        await restartDatabase.close();
+      }
     } finally {
       await database.close();
     }
