@@ -1,5 +1,9 @@
 # HTTP-Transport
 
+[`campaign-routes.ts`](campaign-routes.ts) registriert die geschützten
+Kampagnenoperationen für Erstellen, Auflisten und Einzelabfrage. Der
+`Idempotency-Key`-Header wird unverändert an die Application-Schicht übergeben.
+
 [`session-routes.ts`](session-routes.ts) registriert die drei Bearer-Sessionrouten;
 [`auth-hook.ts`](auth-hook.ts) stellt bestätigte Identität für geschützte Routen bereit.
 

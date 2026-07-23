@@ -2,6 +2,7 @@ import type { Logger } from "pino";
 import { fileURLToPath } from "node:url";
 
 import { AccountRegistrationService } from "../../application/accounts/registration.js";
+import { CampaignService } from "../../application/campaigns/service.js";
 import { SessionService } from "../../application/sessions/service.js";
 import type {
   BalancingLoader,
@@ -10,6 +11,7 @@ import type {
 import type { ReadinessProbe } from "../../application/health/readiness.js";
 import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader.js";
 import { KyselyAccountRepository } from "../../infrastructure/accounts/repository.js";
+import { KyselyCampaignRepository } from "../../infrastructure/campaigns/repository.js";
 import {
   Argon2PasswordHasher,
   DUMMY_PASSWORD_HASH,
@@ -38,6 +40,7 @@ export interface ApplicationDependencies {
   readonly balancingLoader?: BalancingLoader;
   readonly database?: PostgresDatabase;
   readonly accountRegistration?: Pick<AccountRegistrationService, "register">;
+  readonly campaignService?: Pick<CampaignService, "create" | "list" | "get">;
   readonly sessionService?: Pick<SessionService, "create" | "current" | "revoke" | "authenticate">;
   readonly resources?: readonly ShutdownResource[];
 }
@@ -109,10 +112,21 @@ export function createApplication(
           sessionLifetimeMs: config.sessionLifetimeMs,
           dummyPasswordHash: DUMMY_PASSWORD_HASH,
         }));
+  const campaignService =
+    dependencies.campaignService ??
+    (database === undefined
+      ? undefined
+      : new CampaignService({
+          repository: new KyselyCampaignRepository(database.db),
+          balancingLoader,
+          idGenerator: new PrefixedIdGenerator(new NodeCryptographicRandomSource()),
+          wallClock: new SystemWallClock(),
+        }));
   const serverDependencies: ServerDependencies = {
     logger,
     ...(readinessProbe === undefined ? {} : { readinessProbe }),
     ...(accountRegistration === undefined ? {} : { accountRegistration }),
+    ...(campaignService === undefined ? {} : { campaignService }),
     ...(sessionService === undefined ? {} : { sessionService }),
   };
   const server = createServer(config, serverDependencies);

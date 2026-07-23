@@ -1,0 +1,138 @@
+// Feature: GAL-CAMPAIGN-CREATE-001
+// Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md
+// Architekturentscheidung: docs/decisions/0001-asynchrones-kampagnen-und-controller-grundmodell.md
+
+import type { Kysely } from "kysely";
+
+import type {
+  CampaignCreateResult,
+  CampaignRepository,
+} from "../../application/campaigns/ports.js";
+import type { Campaign } from "../../domain/campaigns/campaign.js";
+import type { CampaignTable, DatabaseSchema } from "../database/database.js";
+
+export class KyselyCampaignRepository implements CampaignRepository {
+  private readonly database: Kysely<DatabaseSchema>;
+
+  public constructor(database: Kysely<DatabaseSchema>) {
+    this.database = database;
+  }
+
+  public async create(campaign: Campaign): Promise<CampaignCreateResult> {
+    return this.database.transaction().execute(async (transaction) => {
+      const inserted = await transaction
+        .insertInto("campaigns")
+        .values(toCampaignRow(campaign))
+        .onConflict((conflict) =>
+          conflict.columns(["owner_account_id", "idempotency_key"]).doNothing(),
+        )
+        .returning("campaign_id")
+        .executeTakeFirst();
+
+      if (inserted !== undefined) {
+        await transaction
+          .insertInto("campaign_participants")
+          .values({
+            campaign_id: campaign.id,
+            account_id: campaign.ownerAccountId,
+            participant_role: "owner",
+            can_read: true,
+            can_control: true,
+            joined_at: new Date(campaign.createdAt),
+          })
+          .execute();
+        return { kind: "created", campaign };
+      }
+
+      const existing = await transaction
+        .selectFrom("campaigns")
+        .selectAll()
+        .where("owner_account_id", "=", campaign.ownerAccountId)
+        .where("idempotency_key", "=", campaign.idempotencyKey)
+        .executeTakeFirst();
+      if (existing === undefined) {
+        throw new Error("Campaign idempotency record disappeared during creation");
+      }
+      if (existing.creation_fingerprint !== campaign.creationFingerprint) {
+        return { kind: "conflict" };
+      }
+      return { kind: "existing", campaign: fromCampaignRow(existing) };
+    });
+  }
+
+  public async listForAccount(accountId: string): Promise<readonly Campaign[]> {
+    const rows = await this.database
+      .selectFrom("campaigns")
+      .innerJoin(
+        "campaign_participants",
+        "campaign_participants.campaign_id",
+        "campaigns.campaign_id",
+      )
+      .selectAll("campaigns")
+      .where("campaign_participants.account_id", "=", accountId)
+      .where("campaign_participants.can_read", "=", true)
+      .orderBy("campaigns.created_at", "desc")
+      .orderBy("campaigns.campaign_id", "desc")
+      .execute();
+    return rows.map(fromCampaignRow);
+  }
+
+  public async findForAccount(
+    accountId: string,
+    campaignId: string,
+  ): Promise<Campaign | undefined> {
+    const row = await this.database
+      .selectFrom("campaigns")
+      .innerJoin(
+        "campaign_participants",
+        "campaign_participants.campaign_id",
+        "campaigns.campaign_id",
+      )
+      .selectAll("campaigns")
+      .where("campaigns.campaign_id", "=", campaignId)
+      .where("campaign_participants.account_id", "=", accountId)
+      .where("campaign_participants.can_read", "=", true)
+      .executeTakeFirst();
+    return row === undefined ? undefined : fromCampaignRow(row);
+  }
+}
+
+type CampaignRow = Omit<CampaignTable, "id"> & { readonly id: number };
+
+function toCampaignRow(campaign: Campaign): Omit<CampaignTable, "id"> {
+  return {
+    campaign_id: campaign.id,
+    owner_account_id: campaign.ownerAccountId,
+    campaign_type: campaign.type,
+    status: campaign.status,
+    seed: campaign.seed,
+    time_profile: campaign.timeProfile,
+    balancing_version: campaign.balancingVersion,
+    catalog_version: campaign.catalogVersion,
+    balancing_hash: campaign.balancingHash,
+    state_version: campaign.stateVersion,
+    campaign_time_ms: campaign.campaignTimeMs,
+    idempotency_key: campaign.idempotencyKey,
+    creation_fingerprint: campaign.creationFingerprint,
+    created_at: new Date(campaign.createdAt),
+  };
+}
+
+function fromCampaignRow(row: CampaignRow): Campaign {
+  return {
+    id: row.campaign_id,
+    ownerAccountId: row.owner_account_id,
+    type: row.campaign_type,
+    status: row.status,
+    seed: Number(row.seed),
+    timeProfile: row.time_profile,
+    balancingVersion: row.balancing_version,
+    catalogVersion: row.catalog_version,
+    balancingHash: row.balancing_hash,
+    stateVersion: Number(row.state_version),
+    campaignTimeMs: Number(row.campaign_time_ms),
+    idempotencyKey: row.idempotency_key,
+    creationFingerprint: row.creation_fingerprint,
+    createdAt: row.created_at.getTime(),
+  };
+}

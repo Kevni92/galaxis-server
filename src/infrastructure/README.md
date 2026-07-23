@@ -2,6 +2,9 @@
 
 Token- und Sessionpersistenz liegen unter [`sessions/`](sessions/README.md).
 
+Kampagnenpersistenz liegt unter [`campaigns/`](campaigns/README.md) und schreibt
+Kampagne sowie Besitzerteilnehmer in einer Transaktion.
+
 Accountadapter und Argon2id liegen unter [`accounts/`](accounts/README.md).
 
 Die Runtime-Adapter unter [`runtime/`](runtime/README.md) sind die einzige

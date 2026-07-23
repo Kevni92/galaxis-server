@@ -25,9 +25,38 @@ export interface SessionTable {
   revoked_at: Date | null;
 }
 
+export interface CampaignTable {
+  id: Generated<number>;
+  campaign_id: string;
+  owner_account_id: string;
+  campaign_type: "singleplayer";
+  status: "running";
+  seed: number;
+  time_profile: string;
+  balancing_version: string;
+  catalog_version: string;
+  balancing_hash: string;
+  state_version: number;
+  campaign_time_ms: number;
+  idempotency_key: string;
+  creation_fingerprint: string;
+  created_at: Date;
+}
+
+export interface CampaignParticipantTable {
+  campaign_id: string;
+  account_id: string;
+  participant_role: "owner";
+  can_read: boolean;
+  can_control: boolean;
+  joined_at: Date;
+}
+
 export interface DatabaseSchema {
   accounts: AccountTable;
   sessions: SessionTable;
+  campaigns: CampaignTable;
+  campaign_participants: CampaignParticipantTable;
 }
 
 export interface PostgresDatabase {
