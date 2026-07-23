@@ -16,6 +16,12 @@ Der controllergefilterte Lesezugriff auf Reiche liegt unter
 Der Lesezugriff auf die Heimatkolonie liegt unter
 [`colonies/`](colonies/README.md).
 
+Die Startbaseline für Bevölkerung und Grundversorgung liegt unter
+[`population/`](population/README.md).
+
+Die gefilterten A1-Zustandsabfragen (Kampagnenübersicht, bekannte Galaxie,
+Systemdetail, Kolonieübersicht) liegen unter [`state/`](state/README.md).
+
 Die lokale Registrierung liegt in [`accounts/registration.ts`](accounts/registration.ts)
 und verwendet die injizierbaren Ports aus [`accounts/ports.ts`](accounts/ports.ts).
 

@@ -8,6 +8,11 @@ Kampagnenoperationen für Erstellen, Auflisten und Einzelabfrage. Der
 wissensgefilterten Lesezusammenfassungen `GET .../empires/{empireId}/population`
 und `.../economy` der Heimatkolonie.
 
+[`state-routes.ts`](state-routes.ts) registriert die A1-Zustandsabfragen
+`GET .../{campaignId}/state`, `.../galaxy`, `.../systems/{systemId}` und
+`.../empires/{empireId}/colonies` mit schwachem ETag aus `stateVersion` und
+`304`-Antwort bei passendem `If-None-Match`.
+
 [`session-routes.ts`](session-routes.ts) registriert die drei Bearer-Sessionrouten;
 [`auth-hook.ts`](auth-hook.ts) stellt bestätigte Identität für geschützte Routen bereit.
 

@@ -7,6 +7,7 @@ import type { Logger } from "pino";
 import type { AccountRegistrationService } from "../../application/accounts/registration.js";
 import type { CampaignService } from "../../application/campaigns/service.js";
 import type { PopulationService } from "../../application/population/service.js";
+import type { StateQueryService } from "../../application/state/service.js";
 import type { SessionService } from "../../application/sessions/service.js";
 import {
   NoExternalDependenciesReadinessProbe,
@@ -20,6 +21,7 @@ import { registerSessionRoutes } from "../../transport/http/session-routes.js";
 import { registerHealthRoutes } from "../../transport/http/health-routes.js";
 import { registerCampaignRoutes } from "../../transport/http/campaign-routes.js";
 import { registerPopulationRoutes } from "../../transport/http/population-routes.js";
+import { registerStateRoutes } from "../../transport/http/state-routes.js";
 
 export interface ServerDependencies {
   readonly logger?: Logger;
@@ -29,6 +31,10 @@ export interface ServerDependencies {
   readonly populationService?: Pick<
     PopulationService,
     "getPopulationSummary" | "getEconomySummary"
+  >;
+  readonly stateService?: Pick<
+    StateQueryService,
+    "getCampaignState" | "getGalaxyOverview" | "getSystemDetail" | "getColonyOverview"
   >;
   readonly sessionService?: Pick<SessionService, "create" | "current" | "revoke" | "authenticate">;
 }
@@ -71,6 +77,9 @@ export function createServer(config: RuntimeConfig, dependencies: ServerDependen
   }
   if (dependencies.populationService !== undefined && dependencies.sessionService !== undefined) {
     registerPopulationRoutes(server, dependencies.populationService, dependencies.sessionService);
+  }
+  if (dependencies.stateService !== undefined && dependencies.sessionService !== undefined) {
+    registerStateRoutes(server, dependencies.stateService, dependencies.sessionService);
   }
 
   return server;
