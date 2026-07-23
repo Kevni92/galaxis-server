@@ -106,12 +106,17 @@ describe("CampaignService", () => {
 
     expect(repository.creations).toHaveLength(1);
     const creation = repository.creations[0];
+    const homeSystemId = creation?.colony.systemId;
+    const homePlanetId = creation?.colony.planetId;
     expect(creation?.empire).toEqual({
       id: "emp_fake_0001",
       campaignId: campaign.campaignId,
       name: "Startreich",
       status: "aktiv",
-      knowledge: { knownSystemIds: [], knownPlanetIds: [] },
+      knowledge: {
+        knownSystemIds: [homeSystemId],
+        knownPlanetIds: [homePlanetId],
+      },
     });
     expect(creation?.controller).toEqual({
       empireId: "emp_fake_0001",
@@ -119,6 +124,43 @@ describe("CampaignService", () => {
       controllerType: "player",
       canRead: true,
       canControl: true,
+    });
+  });
+
+  it("creates exactly one active, neutral home colony consistent with its empire", async () => {
+    const { service, repository } = createService();
+
+    const campaign = await service.create({
+      accountId: "acc_owner",
+      seed: 42,
+      timeProfile: "standard",
+      idempotencyKey: "create-1",
+    });
+
+    expect(repository.creations).toHaveLength(1);
+    const creation = repository.creations[0];
+    expect(creation?.colony).toEqual({
+      id: "col_fake_0001",
+      campaignId: campaign.campaignId,
+      empireId: "emp_fake_0001",
+      planetId: "pln_fake_0001",
+      systemId: creation?.planet.systemId,
+      isHomeColony: true,
+      lifecycleState: "etabliert",
+      specialization: "neutral",
+    });
+    expect(creation?.planet).toEqual({
+      id: "pln_fake_0001",
+      systemId: creation?.colony.systemId,
+      campaignId: campaign.campaignId,
+      ownerEmpireId: "emp_fake_0001",
+      category: expect.stringMatching(/^(terrestrial|gas-giant|ice|barren)$/u),
+      size: expect.stringMatching(/^(small|medium|large)$/u),
+    });
+    // Wissen des Reiches nennt genau das Heimatsystem und den Heimatplaneten.
+    expect(creation?.empire.knowledge).toEqual({
+      knownSystemIds: [creation?.colony.systemId],
+      knownPlanetIds: [creation?.colony.planetId],
     });
   });
 

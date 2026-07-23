@@ -1,13 +1,18 @@
-// Feature: GAL-CAMPAIGN-CREATE-001, GAL-GALAXY-GENERATE-001
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-GALAXY-GENERATE-001, GAL-COLONY-HOME-001
 // Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md, docs/docs/02-galaxy/galaxiestruktur-und-generierung.md
+// Fachliche Grundlage: docs/docs/04-planets/planeten-und-kolonien.md
 // REST-Vertrag: docs/contracts/rest-api/galaxis-rest-v1.md
 
 import { ApplicationError } from "../errors.js";
 import type { BalancingLoader } from "../balancing/loader.js";
 import type { WallClock } from "../runtime/clock.js";
 import type { IdGenerator } from "../runtime/ids.js";
-import { GALAXY_GENERATOR_VERSION, SMALL_GALAXY_PROFILE } from "../../domain/galaxy/galaxy.js";
-import type { GalaxyGenerator } from "../galaxy/ports.js";
+import {
+  GALAXY_GENERATOR_VERSION,
+  SMALL_GALAXY_PROFILE,
+  type GalaxyPlanet,
+} from "../../domain/galaxy/galaxy.js";
+import type { GalaxyGenerator, GalaxyGenerationReport } from "../galaxy/ports.js";
 import {
   assertCampaignCreationValues,
   campaignCreationFingerprint,
@@ -15,10 +20,17 @@ import {
 } from "../../domain/campaigns/campaign.js";
 import {
   assertEmpireCreationValues,
-  emptyEmpireKnowledge,
+  homeEmpireKnowledge,
   type Empire,
   type EmpireController,
 } from "../../domain/empires/empire.js";
+import {
+  assertHomeColonyConsistency,
+  assertHomeColonyStartState,
+  assertHomeColonyValues,
+  type Colony,
+  type HomePlanet,
+} from "../../domain/colonies/colony.js";
 import type { CampaignRepository } from "./ports.js";
 
 const START_EMPIRE_NAME = "Startreich";
@@ -56,6 +68,17 @@ function invalidCreation(details: readonly { field: string; reason: string }[]):
     details,
     retryable: false,
   });
+}
+
+function findHomePlanet(galaxy: GalaxyGenerationReport): GalaxyPlanet | undefined {
+  for (const system of galaxy.galaxy.systems) {
+    for (const planet of system.planets) {
+      if (planet.id === galaxy.homePlanetId && planet.systemId === galaxy.homeSystemId) {
+        return planet;
+      }
+    }
+  }
+  return undefined;
 }
 
 function toResponse(campaign: Campaign): CampaignResponse {
@@ -97,8 +120,9 @@ export class CampaignService {
     }
 
     const balancing = await this.balancingLoader.load();
+    let galaxy: GalaxyGenerationReport;
     try {
-      this.galaxyGenerator.generate({
+      galaxy = this.galaxyGenerator.generate({
         seed: request.seed,
         generatorVersion: GALAXY_GENERATOR_VERSION,
         profile: SMALL_GALAXY_PROFILE,
@@ -136,12 +160,14 @@ export class CampaignService {
       throw invalidCreation([{ field: "empire", reason: message }]);
     }
     const empireId = this.idGenerator.next("emp");
+    const { planet, colony } = this.buildHomeColony(campaignId, empireId, galaxy);
     const empire: Empire = {
       id: empireId,
       campaignId,
       name: START_EMPIRE_NAME,
       status: "aktiv",
-      knowledge: emptyEmpireKnowledge(),
+      // Wissen nennt genau den besessenen Heimatplaneten, nicht die interne Galaxie-ID.
+      knowledge: homeEmpireKnowledge(colony.systemId, colony.planetId),
     };
     const controller: EmpireController = {
       empireId,
@@ -151,7 +177,7 @@ export class CampaignService {
       canControl: true,
     };
 
-    const result = await this.repository.create({ campaign, empire, controller });
+    const result = await this.repository.create({ campaign, empire, controller, planet, colony });
     if (result.kind === "conflict") {
       throw new ApplicationError(
         "CAMPAIGN_CREATE_CONFLICT",
@@ -160,6 +186,54 @@ export class CampaignService {
       );
     }
     return toResponse(result.campaign);
+  }
+
+  /**
+   * Baut den Heimatplaneten und genau eine aktive, neutrale Heimatkolonie aus der
+   * deterministisch generierten Galaxie. Fehlt der Heimatplanet oder ist der
+   * Startzustand inkonsistent, wird die Kampagne vor jeder Persistenz abgelehnt.
+   */
+  private buildHomeColony(
+    campaignId: string,
+    empireId: string,
+    galaxy: GalaxyGenerationReport,
+  ): { readonly planet: HomePlanet; readonly colony: Colony } {
+    const homePlanet = findHomePlanet(galaxy);
+    if (homePlanet === undefined) {
+      throw invalidCreation([{ field: "colony", reason: "generated galaxy has no home planet" }]);
+    }
+
+    const planetId = this.idGenerator.next("pln");
+    const colonyId = this.idGenerator.next("col");
+    const planet: HomePlanet = {
+      id: planetId,
+      systemId: galaxy.homeSystemId,
+      campaignId,
+      ownerEmpireId: empireId,
+      category: homePlanet.category,
+      size: homePlanet.size,
+    };
+    const colony: Colony = {
+      id: colonyId,
+      campaignId,
+      empireId,
+      planetId,
+      systemId: galaxy.homeSystemId,
+      isHomeColony: true,
+      lifecycleState: "etabliert",
+      specialization: "neutral",
+    };
+
+    try {
+      assertHomeColonyValues(colony);
+      assertHomeColonyStartState(colony);
+      assertHomeColonyConsistency(colony, planet);
+    } catch (error) {
+      const reason = error instanceof RangeError ? error.message : "invalid home colony";
+      throw invalidCreation([{ field: "colony", reason }]);
+    }
+
+    return { planet, colony };
   }
 
   public async list(accountId: string): Promise<readonly CampaignResponse[]> {

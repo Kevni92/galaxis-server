@@ -1,6 +1,7 @@
-// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001, GAL-COLONY-HOME-001
 // Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md
 // Fachliche Grundlage: docs/docs/03-empires/reichsverwaltung.md
+// Fachliche Grundlage: docs/docs/04-planets/planeten-und-kolonien.md
 // Architekturentscheidung: docs/decisions/0001-asynchrones-kampagnen-und-controller-grundmodell.md
 
 import type { Kysely } from "kysely";
@@ -12,6 +13,7 @@ import type {
 } from "../../application/campaigns/ports.js";
 import type { Campaign } from "../../domain/campaigns/campaign.js";
 import type { Empire, EmpireController } from "../../domain/empires/empire.js";
+import type { Colony, HomePlanet } from "../../domain/colonies/colony.js";
 import type { CampaignTable, DatabaseSchema } from "../database/database.js";
 
 export class KyselyCampaignRepository implements CampaignRepository {
@@ -22,7 +24,7 @@ export class KyselyCampaignRepository implements CampaignRepository {
   }
 
   public async create(creation: CampaignCreation): Promise<CampaignCreateResult> {
-    const { campaign, empire, controller } = creation;
+    const { campaign, empire, controller, planet, colony } = creation;
     return this.database.transaction().execute(async (transaction) => {
       const inserted = await transaction
         .insertInto("campaigns")
@@ -50,6 +52,8 @@ export class KyselyCampaignRepository implements CampaignRepository {
           .insertInto("empire_controllers")
           .values(toControllerRow(controller))
           .execute();
+        await transaction.insertInto("planets").values(toPlanetRow(planet)).execute();
+        await transaction.insertInto("colonies").values(toColonyRow(colony)).execute();
         return { kind: "created", campaign };
       }
 
@@ -158,6 +162,46 @@ function toControllerRow(controller: EmpireController): {
     controller_type: controller.controllerType,
     can_read: controller.canRead,
     can_control: controller.canControl,
+  };
+}
+
+function toPlanetRow(planet: HomePlanet): {
+  planet_id: string;
+  campaign_id: string;
+  system_id: string;
+  owner_empire_id: string;
+  category: HomePlanet["category"];
+  size: HomePlanet["size"];
+} {
+  return {
+    planet_id: planet.id,
+    campaign_id: planet.campaignId,
+    system_id: planet.systemId,
+    owner_empire_id: planet.ownerEmpireId,
+    category: planet.category,
+    size: planet.size,
+  };
+}
+
+function toColonyRow(colony: Colony): {
+  colony_id: string;
+  campaign_id: string;
+  empire_id: string;
+  planet_id: string;
+  system_id: string;
+  is_home_colony: boolean;
+  lifecycle_state: Colony["lifecycleState"];
+  specialization: Colony["specialization"];
+} {
+  return {
+    colony_id: colony.id,
+    campaign_id: colony.campaignId,
+    empire_id: colony.empireId,
+    planet_id: colony.planetId,
+    system_id: colony.systemId,
+    is_home_colony: colony.isHomeColony,
+    lifecycle_state: colony.lifecycleState,
+    specialization: colony.specialization,
   };
 }
 

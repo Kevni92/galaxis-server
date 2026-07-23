@@ -8,12 +8,15 @@ Infrastrukturadapter.
 Sessionzustand ohne Token- oder Datenbankimplementierung.
 
 [`campaigns/campaign.ts`](campaigns/campaign.ts) beschreibt die Kampagnenmetadaten
-und Erstellungsinvarianten. Galaxie und Kolonie werden in folgenden A1-Issues
-ergänzt.
+und Erstellungsinvarianten.
 
 [`empires/empire.ts`](empires/empire.ts) beschreibt das Startreich mit stabiler
-Identität, leerem Wissenscontainer und getrennter Controllerzuordnung (siehe
-[`empires/README.md`](empires/README.md)).
+Identität, Startwissen (Heimatsystem und Heimatplanet) und getrennter
+Controllerzuordnung (siehe [`empires/README.md`](empires/README.md)).
+
+[`colonies/colony.ts`](colonies/colony.ts) beschreibt den Heimatplaneten und die
+aktive, neutrale Heimatkolonie mit ihren Konsistenzinvarianten (siehe
+[`colonies/README.md`](colonies/README.md)).
 
 Die lokale Accountregistrierung verwendet [`accounts/account.ts`](accounts/account.ts)
 für ein normalisiertes, technikfreies Accountmodell.

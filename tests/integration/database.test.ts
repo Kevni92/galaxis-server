@@ -10,6 +10,7 @@ import { GenericContainer, type StartedTestContainer, Wait } from "testcontainer
 import { KyselyAccountRepository } from "../../src/infrastructure/accounts/repository.js";
 import { KyselyCampaignRepository } from "../../src/infrastructure/campaigns/repository.js";
 import { KyselyEmpireRepository } from "../../src/infrastructure/empires/repository.js";
+import { KyselyColonyRepository } from "../../src/infrastructure/colonies/repository.js";
 import { KyselySessionRepository } from "../../src/infrastructure/sessions/repository.js";
 import { loadConfig } from "../../src/infrastructure/config/config.js";
 import { createPostgresDatabase } from "../../src/infrastructure/database/database.js";
@@ -58,7 +59,7 @@ describe("PostgreSQL database foundation", () => {
         "SELECT version, name FROM schema_migrations ORDER BY version",
       );
 
-      expect(first.appliedVersions).toEqual([1, 2, 3, 4, 5]);
+      expect(first.appliedVersions).toEqual([1, 2, 3, 4, 5, 6]);
       expect(second.appliedVersions).toEqual([]);
       expect(result.rows).toEqual([
         { version: 1, name: "create-schema-migrations" },
@@ -66,6 +67,7 @@ describe("PostgreSQL database foundation", () => {
         { version: 3, name: "create-sessions" },
         { version: 4, name: "create-campaigns" },
         { version: 5, name: "create-empires" },
+        { version: 6, name: "create-home-colonies" },
       ]);
     } finally {
       await pool.end();
@@ -84,6 +86,7 @@ describe("PostgreSQL database foundation", () => {
         "003-create-sessions.sql",
         "004-create-campaigns.sql",
         "005-create-empires.sql",
+        "006-create-home-colonies.sql",
       ]) {
         await writeFile(
           join(directory, filename),
@@ -92,7 +95,7 @@ describe("PostgreSQL database foundation", () => {
         );
       }
       await writeFile(
-        join(directory, "006-fail.sql"),
+        join(directory, "007-fail.sql"),
         "CREATE TABLE migration_marker (id INTEGER PRIMARY KEY);\nSELECT 1 / 0;\n",
         "utf8",
       );
@@ -102,7 +105,14 @@ describe("PostgreSQL database foundation", () => {
       await expect(
         pool.query("SELECT version FROM schema_migrations ORDER BY version"),
       ).resolves.toMatchObject({
-        rows: [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }],
+        rows: [
+          { version: 1 },
+          { version: 2 },
+          { version: 3 },
+          { version: 4 },
+          { version: 5 },
+          { version: 6 },
+        ],
       });
     } finally {
       await pool.end();
@@ -225,6 +235,7 @@ describe("PostgreSQL database foundation", () => {
     const accountRepository = new KyselyAccountRepository(database.db);
     const campaignRepository = new KyselyCampaignRepository(database.db);
     const empireRepository = new KyselyEmpireRepository(database.db);
+    const colonyRepository = new KyselyColonyRepository(database.db);
     const campaign = {
       id: "cmp_integration_0001",
       ownerAccountId: "acc_campaign_integration_0001",
@@ -246,7 +257,7 @@ describe("PostgreSQL database foundation", () => {
       campaignId: campaign.id,
       name: "Startreich",
       status: "aktiv" as const,
-      knowledge: { knownSystemIds: [], knownPlanetIds: [] },
+      knowledge: { knownSystemIds: ["sys_0001"], knownPlanetIds: ["pln_integration_0001"] },
     };
     const controller = {
       empireId: empire.id,
@@ -255,7 +266,25 @@ describe("PostgreSQL database foundation", () => {
       canRead: true,
       canControl: true,
     };
-    const creation = { campaign, empire, controller };
+    const planet = {
+      id: "pln_integration_0001",
+      systemId: "sys_0001",
+      campaignId: campaign.id,
+      ownerEmpireId: empire.id,
+      category: "terrestrial" as const,
+      size: "medium" as const,
+    };
+    const colony = {
+      id: "col_integration_0001",
+      campaignId: campaign.id,
+      empireId: empire.id,
+      planetId: planet.id,
+      systemId: planet.systemId,
+      isHomeColony: true,
+      lifecycleState: "etabliert" as const,
+      specialization: "neutral" as const,
+    };
+    const creation = { campaign, empire, controller, planet, colony };
 
     try {
       await accountRepository.create({
@@ -304,6 +333,42 @@ describe("PostgreSQL database foundation", () => {
       await expect(
         empireRepository.listReadableForAccount("another-account", campaign.id),
       ).resolves.toEqual([]);
+
+      // Genau eine aktive, neutrale Heimatkolonie ist nach Reload identisch.
+      await expect(
+        colonyRepository.findHomeColonyForEmpire(campaign.id, empire.id),
+      ).resolves.toEqual({ colony, planet });
+      const homeColonyCount = await database.pool.query(
+        "SELECT count(*)::int AS total FROM colonies WHERE empire_id = $1 AND is_home_colony",
+        [empire.id],
+      );
+      expect(homeColonyCount.rows).toEqual([{ total: 1 }]);
+    } finally {
+      await database.close();
+    }
+  });
+
+  it("rejects a second home colony for the same empire", async ({ skip }) => {
+    if (connectionString === undefined) return skip();
+    const database = createPostgresDatabase(
+      loadConfig({
+        GALAXIS_PORT: "3000",
+        GALAXIS_LOG_LEVEL: "silent",
+        GALAXIS_DATABASE_URL: connectionString,
+      }),
+    );
+
+    try {
+      await database.pool.query(
+        `INSERT INTO planets (planet_id, campaign_id, system_id, owner_empire_id, category, size)
+         VALUES ('pln_second_0001', 'cmp_integration_0001', 'sys_0002', 'emp_integration_0001', 'ice', 'small')`,
+      );
+      await expect(
+        database.pool.query(
+          `INSERT INTO colonies (colony_id, campaign_id, empire_id, planet_id, system_id, is_home_colony, lifecycle_state, specialization)
+           VALUES ('col_second_0001', 'cmp_integration_0001', 'emp_integration_0001', 'pln_second_0001', 'sys_0002', true, 'etabliert', 'neutral')`,
+        ),
+      ).rejects.toThrow();
     } finally {
       await database.close();
     }
