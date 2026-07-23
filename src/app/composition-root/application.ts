@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { AccountRegistrationService } from "../../application/accounts/registration.js";
 import { CampaignService } from "../../application/campaigns/service.js";
 import { PopulationService } from "../../application/population/service.js";
+import { StateQueryService } from "../../application/state/service.js";
 import { SessionService } from "../../application/sessions/service.js";
 import type {
   BalancingLoader,
@@ -14,6 +15,7 @@ import { FileSystemBalancingLoader } from "../../infrastructure/balancing/loader
 import { KyselyAccountRepository } from "../../infrastructure/accounts/repository.js";
 import { KyselyCampaignRepository } from "../../infrastructure/campaigns/repository.js";
 import { KyselyEmpireRepository } from "../../infrastructure/empires/repository.js";
+import { KyselyColonyRepository } from "../../infrastructure/colonies/repository.js";
 import { KyselyStartBaselineRepository } from "../../infrastructure/population/repository.js";
 import {
   Argon2PasswordHasher,
@@ -48,6 +50,10 @@ export interface ApplicationDependencies {
   readonly populationService?: Pick<
     PopulationService,
     "getPopulationSummary" | "getEconomySummary"
+  >;
+  readonly stateService?: Pick<
+    StateQueryService,
+    "getCampaignState" | "getGalaxyOverview" | "getSystemDetail" | "getColonyOverview"
   >;
   readonly sessionService?: Pick<SessionService, "create" | "current" | "revoke" | "authenticate">;
   readonly resources?: readonly ShutdownResource[];
@@ -139,12 +145,23 @@ export function createApplication(
           empireRepository: new KyselyEmpireRepository(database.db),
           baselineRepository: new KyselyStartBaselineRepository(database.db),
         }));
+  const stateService =
+    dependencies.stateService ??
+    (database === undefined
+      ? undefined
+      : new StateQueryService({
+          campaignRepository: new KyselyCampaignRepository(database.db),
+          empireRepository: new KyselyEmpireRepository(database.db),
+          colonyRepository: new KyselyColonyRepository(database.db),
+          galaxyGenerator: new DeterministicGalaxyGenerator(),
+        }));
   const serverDependencies: ServerDependencies = {
     logger,
     ...(readinessProbe === undefined ? {} : { readinessProbe }),
     ...(accountRegistration === undefined ? {} : { accountRegistration }),
     ...(campaignService === undefined ? {} : { campaignService }),
     ...(populationService === undefined ? {} : { populationService }),
+    ...(stateService === undefined ? {} : { stateService }),
     ...(sessionService === undefined ? {} : { sessionService }),
   };
   const server = createServer(config, serverDependencies);
