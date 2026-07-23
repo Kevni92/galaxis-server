@@ -16,3 +16,5 @@
 11. Jeder Pull Request verwendet ausschließlich `main` als Base-Branch.
 12. Feature-Branches dürfen nicht ineinander gemergt oder als gestapelte Pull Requests veröffentlicht werden.
 13. Mit dem nächsten Issue wird erst begonnen, nachdem der Pull Request des vorherigen Issues in `main` gemergt wurde.
+14. Das Erstellen eines Pull Requests ist ein verpflichtender Abschluss-Schritt jeder Issue-Umsetzung. Nach erfolgreicher Prüfung muss der Agent die Änderungen bewusst committen, den Issue-Branch pushen, einen Pull Request mit `main` als Base erstellen und die PR-Nummer sowie den Link im Abschlussbericht nennen.
+15. Eine Umsetzung darf nicht als abgeschlossen gemeldet werden, solange nur lokale Änderungen, ein lokaler Commit oder ein Push ohne Pull Request vorliegt. Ein Push ohne Pull Request ist nur zulässig, wenn der Nutzer dies für eine ausdrücklich benannte Dokumentations- oder Wartungsänderung anordnet.
