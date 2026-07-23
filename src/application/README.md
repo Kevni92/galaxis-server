@@ -7,7 +7,11 @@ Der Generatorport für die deterministische Startgalaxie liegt unter
 und Widerruf über getrennte Persistenz-, Token-, Zeit- und Rate-Limit-Ports.
 
 [`campaigns/service.ts`](campaigns/service.ts) erstellt idempotente
-Singleplayer-Kampagnen und liest nur Kampagnen des authentifizierten Accounts.
+Singleplayer-Kampagnen samt Startreich und Controllerzuordnung und liest nur
+Kampagnen des authentifizierten Accounts.
+
+Der controllergefilterte Lesezugriff auf Reiche liegt unter
+[`empires/`](empires/README.md).
 
 Die lokale Registrierung liegt in [`accounts/registration.ts`](accounts/registration.ts)
 und verwendet die injizierbaren Ports aus [`accounts/ports.ts`](accounts/ports.ts).

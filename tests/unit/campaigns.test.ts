@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { CampaignService } from "../../src/application/campaigns/service.js";
-import type { CampaignRepository } from "../../src/application/campaigns/ports.js";
+import type {
+  CampaignCreation,
+  CampaignRepository,
+} from "../../src/application/campaigns/ports.js";
 import type { Campaign } from "../../src/domain/campaigns/campaign.js";
 import { InMemoryBalancingLoader } from "../../src/infrastructure/balancing/loader.js";
 import { FakeWallClock } from "../../src/infrastructure/runtime/clocks.js";
@@ -22,14 +25,17 @@ const balancingLoader = new InMemoryBalancingLoader({
 
 class FakeCampaignRepository implements CampaignRepository {
   private readonly campaigns = new Map<string, Campaign>();
+  public readonly creations: CampaignCreation[] = [];
 
-  public async create(campaign: Campaign) {
+  public async create(creation: CampaignCreation) {
+    const { campaign } = creation;
     const key = `${campaign.ownerAccountId}:${campaign.idempotencyKey}`;
     const existing = [...this.campaigns.values()].find(
       (candidate) => `${candidate.ownerAccountId}:${candidate.idempotencyKey}` === key,
     );
     if (existing === undefined) {
       this.campaigns.set(campaign.id, campaign);
+      this.creations.push(creation);
       return { kind: "created" as const, campaign };
     }
     return existing.creationFingerprint === campaign.creationFingerprint
@@ -86,6 +92,49 @@ describe("CampaignService", () => {
       stateVersion: 1,
       createdAt: "2026-01-02T00:00:00.000Z",
     });
+  });
+
+  it("creates a start empire whose controller is the owning account", async () => {
+    const { service, repository } = createService();
+
+    const campaign = await service.create({
+      accountId: "acc_owner",
+      seed: 42,
+      timeProfile: "standard",
+      idempotencyKey: "create-1",
+    });
+
+    expect(repository.creations).toHaveLength(1);
+    const creation = repository.creations[0];
+    expect(creation?.empire).toEqual({
+      id: "emp_fake_0001",
+      campaignId: campaign.campaignId,
+      name: "Startreich",
+      status: "aktiv",
+      knowledge: { knownSystemIds: [], knownPlanetIds: [] },
+    });
+    expect(creation?.controller).toEqual({
+      empireId: "emp_fake_0001",
+      accountId: "acc_owner",
+      controllerType: "player",
+      canRead: true,
+      canControl: true,
+    });
+  });
+
+  it("does not create a second empire on an idempotent retry", async () => {
+    const { service, repository } = createService();
+    const request = {
+      accountId: "acc_owner",
+      seed: 42,
+      timeProfile: "standard",
+      idempotencyKey: "create-1",
+    };
+
+    await service.create(request);
+    await service.create(request);
+
+    expect(repository.creations).toHaveLength(1);
   });
 
   it("returns the original campaign for an identical retry", async () => {

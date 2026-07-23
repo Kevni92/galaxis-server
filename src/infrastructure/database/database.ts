@@ -1,7 +1,7 @@
 // Feature: GAL-PLATFORM-DB-001
 // Fachliche Grundlage: docs/decisions/0005-a0-server-technologiestack.md
 
-import { Kysely, PostgresDialect, type Generated } from "kysely";
+import { Kysely, PostgresDialect, type Generated, type JSONColumnType } from "kysely";
 import { Pool } from "pg";
 
 import type { RuntimeConfig } from "../config/config.js";
@@ -52,11 +52,31 @@ export interface CampaignParticipantTable {
   joined_at: Date;
 }
 
+export interface EmpireTable {
+  id: Generated<number>;
+  empire_id: string;
+  campaign_id: string;
+  name: string;
+  status: "vorbereitet" | "aktiv";
+  known_system_ids: JSONColumnType<string[]>;
+  known_planet_ids: JSONColumnType<string[]>;
+}
+
+export interface EmpireControllerTable {
+  empire_id: string;
+  account_id: string;
+  controller_type: "player" | "ai";
+  can_read: boolean;
+  can_control: boolean;
+}
+
 export interface DatabaseSchema {
   accounts: AccountTable;
   sessions: SessionTable;
   campaigns: CampaignTable;
   campaign_participants: CampaignParticipantTable;
+  empires: EmpireTable;
+  empire_controllers: EmpireControllerTable;
 }
 
 export interface PostgresDatabase {

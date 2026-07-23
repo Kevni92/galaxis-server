@@ -1,14 +1,17 @@
-// Feature: GAL-CAMPAIGN-CREATE-001
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-EMPIRE-START-001
 // Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md
+// Fachliche Grundlage: docs/docs/03-empires/reichsverwaltung.md
 // Architekturentscheidung: docs/decisions/0001-asynchrones-kampagnen-und-controller-grundmodell.md
 
 import type { Kysely } from "kysely";
 
 import type {
+  CampaignCreation,
   CampaignCreateResult,
   CampaignRepository,
 } from "../../application/campaigns/ports.js";
 import type { Campaign } from "../../domain/campaigns/campaign.js";
+import type { Empire, EmpireController } from "../../domain/empires/empire.js";
 import type { CampaignTable, DatabaseSchema } from "../database/database.js";
 
 export class KyselyCampaignRepository implements CampaignRepository {
@@ -18,7 +21,8 @@ export class KyselyCampaignRepository implements CampaignRepository {
     this.database = database;
   }
 
-  public async create(campaign: Campaign): Promise<CampaignCreateResult> {
+  public async create(creation: CampaignCreation): Promise<CampaignCreateResult> {
+    const { campaign, empire, controller } = creation;
     return this.database.transaction().execute(async (transaction) => {
       const inserted = await transaction
         .insertInto("campaigns")
@@ -40,6 +44,11 @@ export class KyselyCampaignRepository implements CampaignRepository {
             can_control: true,
             joined_at: new Date(campaign.createdAt),
           })
+          .execute();
+        await transaction.insertInto("empires").values(toEmpireRow(empire)).execute();
+        await transaction
+          .insertInto("empire_controllers")
+          .values(toControllerRow(controller))
           .execute();
         return { kind: "created", campaign };
       }
@@ -115,6 +124,40 @@ function toCampaignRow(campaign: Campaign): Omit<CampaignTable, "id"> {
     idempotency_key: campaign.idempotencyKey,
     creation_fingerprint: campaign.creationFingerprint,
     created_at: new Date(campaign.createdAt),
+  };
+}
+
+function toEmpireRow(empire: Empire): {
+  empire_id: string;
+  campaign_id: string;
+  name: string;
+  status: Empire["status"];
+  known_system_ids: string;
+  known_planet_ids: string;
+} {
+  return {
+    empire_id: empire.id,
+    campaign_id: empire.campaignId,
+    name: empire.name,
+    status: empire.status,
+    known_system_ids: JSON.stringify([...empire.knowledge.knownSystemIds]),
+    known_planet_ids: JSON.stringify([...empire.knowledge.knownPlanetIds]),
+  };
+}
+
+function toControllerRow(controller: EmpireController): {
+  empire_id: string;
+  account_id: string;
+  controller_type: EmpireController["controllerType"];
+  can_read: boolean;
+  can_control: boolean;
+} {
+  return {
+    empire_id: controller.empireId,
+    account_id: controller.accountId,
+    controller_type: controller.controllerType,
+    can_read: controller.canRead,
+    can_control: controller.canControl,
   };
 }
 
