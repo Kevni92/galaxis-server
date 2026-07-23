@@ -1,5 +1,9 @@
 # Domain
 
+Die Galaxiemodelle und ihre Generierungsinvarianten liegen unter
+[`galaxy/`](galaxy/README.md); der technische Generator bleibt ein separater
+Infrastrukturadapter.
+
 [`sessions/session.ts`](sessions/session.ts) beschreibt den technikneutralen
 Sessionzustand ohne Token- oder Datenbankimplementierung.
 

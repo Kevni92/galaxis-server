@@ -1,5 +1,8 @@
 # Runtime-Ports
 
+`random.ts` exportiert zusätzlich eine Factory für benannte, isolierte
+Simulationsströme.
+
 Diese Ports halten Zeit, Simulationszufall, kryptografischen Zufall und IDs von
 technischen Adaptern getrennt. Sie verwenden ausschließlich TypeScript- und
 Standardtypen, damit Domain- und Applicationtests ohne Node-I/O laufen können.

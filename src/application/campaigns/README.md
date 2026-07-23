@@ -1,5 +1,8 @@
 # Kampagnen-Anwendungsfälle
 
+Der Create-Anwendungsfall validiert vor der Persistenz die deterministische
+Startgalaxie über den Generatorport.
+
 | Datei                      | Verantwortung                                  | Fachliche Quelle                                                                                    |
 | -------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | [`service.ts`](service.ts) | Create/List/Get, Idempotenz und Accountzugriff | [`docs/contracts/rest-api/galaxis-rest-v1.md`](../../../docs/contracts/rest-api/galaxis-rest-v1.md) |

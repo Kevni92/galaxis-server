@@ -1,5 +1,8 @@
 # Galaxis Server
 
+Issue #13 ergänzt die minimale deterministische Startgalaxie mit validiertem
+Graphen, geeigneter Startposition und reproduzierbarem Generatorbericht.
+
 Serverautoritativer Galaxis-Server. Dieses Repository enthält die spätere
 TypeScript-/Node.js-Implementierung; die fachliche Quelle bleibt das
 eingebundene [`galaxis-docs`](docs/README.md)-Submodule.

@@ -11,6 +11,11 @@ export interface RandomStream {
   nextInt(maxExclusive: number): number;
 }
 
+/** Creates isolated deterministic streams for named simulation subsystems. */
+export interface RandomStreamFactory {
+  create(seed: number, streamId: string): RandomStream;
+}
+
 /** Cryptographically secure bytes for security-sensitive adapters such as auth. */
 export interface CryptographicRandomSource {
   randomBytes(length: number): Uint8Array;

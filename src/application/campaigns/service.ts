@@ -1,11 +1,13 @@
-// Feature: GAL-CAMPAIGN-CREATE-001
-// Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md
+// Feature: GAL-CAMPAIGN-CREATE-001, GAL-GALAXY-GENERATE-001
+// Fachliche Grundlage: docs/docs/11-campaign/kampagnenstruktur.md, docs/docs/02-galaxy/galaxiestruktur-und-generierung.md
 // REST-Vertrag: docs/contracts/rest-api/galaxis-rest-v1.md
 
 import { ApplicationError } from "../errors.js";
 import type { BalancingLoader } from "../balancing/loader.js";
 import type { WallClock } from "../runtime/clock.js";
 import type { IdGenerator } from "../runtime/ids.js";
+import { GALAXY_GENERATOR_VERSION, SMALL_GALAXY_PROFILE } from "../../domain/galaxy/galaxy.js";
+import type { GalaxyGenerator } from "../galaxy/ports.js";
 import {
   assertCampaignCreationValues,
   campaignCreationFingerprint,
@@ -38,6 +40,7 @@ export interface CampaignServiceDependencies {
   readonly balancingLoader: BalancingLoader;
   readonly idGenerator: IdGenerator;
   readonly wallClock: WallClock;
+  readonly galaxyGenerator: GalaxyGenerator;
 }
 
 function invalidCreation(details: readonly { field: string; reason: string }[]): ApplicationError {
@@ -67,12 +70,14 @@ export class CampaignService {
   private readonly balancingLoader: BalancingLoader;
   private readonly idGenerator: IdGenerator;
   private readonly wallClock: WallClock;
+  private readonly galaxyGenerator: GalaxyGenerator;
 
   public constructor(dependencies: CampaignServiceDependencies) {
     this.repository = dependencies.repository;
     this.balancingLoader = dependencies.balancingLoader;
     this.idGenerator = dependencies.idGenerator;
     this.wallClock = dependencies.wallClock;
+    this.galaxyGenerator = dependencies.galaxyGenerator;
   }
 
   public async create(request: CreateCampaignRequest): Promise<CampaignResponse> {
@@ -84,6 +89,16 @@ export class CampaignService {
     }
 
     const balancing = await this.balancingLoader.load();
+    try {
+      this.galaxyGenerator.generate({
+        seed: request.seed,
+        generatorVersion: GALAXY_GENERATOR_VERSION,
+        profile: SMALL_GALAXY_PROFILE,
+      });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "galaxy generation failed";
+      throw invalidCreation([{ field: "galaxy", reason }]);
+    }
     const campaign: Campaign = {
       id: this.idGenerator.next("cmp"),
       ownerAccountId: request.accountId,

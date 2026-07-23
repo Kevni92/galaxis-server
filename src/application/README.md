@@ -1,5 +1,8 @@
 # Application
 
+Der Generatorport für die deterministische Startgalaxie liegt unter
+[`galaxy/`](galaxy/README.md).
+
 [`sessions/service.ts`](sessions/service.ts) orchestriert Anmeldung, Sessionprüfung
 und Widerruf über getrennte Persistenz-, Token-, Zeit- und Rate-Limit-Ports.
 
