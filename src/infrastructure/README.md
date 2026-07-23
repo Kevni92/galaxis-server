@@ -7,11 +7,14 @@ Simulationszufall sowie einen technischen SHA-256-Hash.
 Token- und Sessionpersistenz liegen unter [`sessions/`](sessions/README.md).
 
 Kampagnenpersistenz liegt unter [`campaigns/`](campaigns/README.md) und schreibt
-Kampagne, Besitzerteilnehmer, Startreich und Controllerzuordnung in einer
-Transaktion.
+Kampagne, Besitzerteilnehmer, Startreich, Controllerzuordnung sowie Heimatplanet
+und aktive Heimatkolonie in einer Transaktion.
 
 Reichspersistenz und controllergefiltertes Lesen liegen unter
 [`empires/`](empires/README.md).
+
+Kolonie- und Planetenpersistenz mit Nachladen der Heimatkolonie liegen unter
+[`colonies/`](colonies/README.md).
 
 Accountadapter und Argon2id liegen unter [`accounts/`](accounts/README.md).
 

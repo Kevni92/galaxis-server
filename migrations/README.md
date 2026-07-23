@@ -1,6 +1,10 @@
 # Datenbankmigrationen
 
-`005-create-empires.sql` legt das Startreich, seinen leeren Wissenscontainer und
+`006-create-home-colonies.sql` legt Heimatplanet und aktive Heimatkolonie an. Ein
+partieller Unique-Index sichert genau eine Heimatkolonie je Reich; beide Tabellen
+hängen per `ON DELETE CASCADE` an Kampagne und Reich.
+
+`005-create-empires.sql` legt das Startreich, seinen Wissenscontainer und
 die getrennte Controllerzuordnung (Lese- und Befehlsrecht) an.
 
 `004-create-campaigns.sql` legt Kampagnenmetadaten, Besitzerzuordnung,
@@ -23,6 +27,7 @@ angewendet und unverändert sind.
 | `001-create-schema-migrations.sql` | A0-Migrationsmetadaten ohne Gameplaytabellen |
 | `004-create-campaigns.sql`         | A1-Kampagnen und Teilnehmerzuordnung         |
 | `005-create-empires.sql`           | A1-Startreich und Controllerzuordnung        |
+| `006-create-home-colonies.sql`     | A1-Heimatplanet und aktive Heimatkolonie     |
 
 Die Architekturentscheidung steht in
 [`docs/decisions/0005-a0-server-technologiestack.md`](../docs/decisions/0005-a0-server-technologiestack.md).

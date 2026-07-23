@@ -70,6 +70,28 @@ export interface EmpireControllerTable {
   can_control: boolean;
 }
 
+export interface PlanetTable {
+  id: Generated<number>;
+  planet_id: string;
+  campaign_id: string;
+  system_id: string;
+  owner_empire_id: string;
+  category: "terrestrial" | "gas-giant" | "ice" | "barren";
+  size: "small" | "medium" | "large";
+}
+
+export interface ColonyTable {
+  id: Generated<number>;
+  colony_id: string;
+  campaign_id: string;
+  empire_id: string;
+  planet_id: string;
+  system_id: string;
+  is_home_colony: boolean;
+  lifecycle_state: "etabliert";
+  specialization: "neutral";
+}
+
 export interface DatabaseSchema {
   accounts: AccountTable;
   sessions: SessionTable;
@@ -77,6 +99,8 @@ export interface DatabaseSchema {
   campaign_participants: CampaignParticipantTable;
   empires: EmpireTable;
   empire_controllers: EmpireControllerTable;
+  planets: PlanetTable;
+  colonies: ColonyTable;
 }
 
 export interface PostgresDatabase {

@@ -44,6 +44,21 @@ export function emptyEmpireKnowledge(): EmpireKnowledge {
   return { knownSystemIds: [], knownPlanetIds: [] };
 }
 
+/**
+ * Startwissen eines Reiches: das Heimatsystem und der Heimatplanet sind bekannt,
+ * sobald die Heimatkolonie existiert. Besitz und Wissen bleiben dadurch konsistent
+ * (siehe GAL-COLONY-HOME-001).
+ */
+export function homeEmpireKnowledge(homeSystemId: string, homePlanetId: string): EmpireKnowledge {
+  if (homeSystemId.trim().length === 0) {
+    throw new RangeError("home system id must not be empty");
+  }
+  if (homePlanetId.trim().length === 0) {
+    throw new RangeError("home planet id must not be empty");
+  }
+  return { knownSystemIds: [homeSystemId], knownPlanetIds: [homePlanetId] };
+}
+
 export function assertEmpireCreationValues(values: {
   readonly campaignId: string;
   readonly ownerAccountId: string;
