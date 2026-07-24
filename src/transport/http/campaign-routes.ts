@@ -16,28 +16,37 @@ import type { SessionService } from "../../application/sessions/service.js";
 import { authenticateSession } from "./auth-hook.js";
 import { errorResponseSchema } from "./error-handler.js";
 
-export const createCampaignRequest = Type.Object({
-  seed: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
-  timeProfile: Type.String({ minLength: 1 }),
-});
+export const createCampaignRequest = Type.Object(
+  {
+    seed: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+    timeProfile: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
 type CreateCampaignRequest = Static<typeof createCampaignRequest>;
 
-export const campaignResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  type: Type.Literal("singleplayer"),
-  status: Type.Literal("running"),
-  seed: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
-  timeProfile: Type.String({ minLength: 1 }),
-  balancingVersion: Type.String({ minLength: 1 }),
-  catalogVersion: Type.String({ minLength: 1 }),
-  balancingHash: Type.String({ minLength: 1 }),
-  stateVersion: Type.Integer({ minimum: 1 }),
-  createdAt: Type.String({ format: "date-time" }),
-});
+export const campaignResponse = Type.Object(
+  {
+    campaignId: Type.String({ minLength: 1 }),
+    type: Type.Literal("singleplayer"),
+    status: Type.Literal("running"),
+    seed: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+    timeProfile: Type.String({ minLength: 1 }),
+    balancingVersion: Type.String({ minLength: 1 }),
+    catalogVersion: Type.String({ minLength: 1 }),
+    balancingHash: Type.String({ minLength: 1 }),
+    stateVersion: Type.Integer({ minimum: 1 }),
+    createdAt: Type.String({ format: "date-time" }),
+  },
+  { additionalProperties: false },
+);
 
-export const campaignListResponse = Type.Object({
-  campaigns: Type.Array(campaignResponse),
-});
+export const campaignListResponse = Type.Object(
+  {
+    campaigns: Type.Array(campaignResponse),
+  },
+  { additionalProperties: false },
+);
 
 const campaignParams = Type.Object({
   campaignId: Type.String({ minLength: 1 }),
@@ -100,7 +109,9 @@ export function registerCampaignRoutes<Logger extends FastifyBaseLogger>(
     "/api/v1/campaigns",
     {
       preHandler: authentication,
-      schema: { response: { 200: campaignListResponse, 401: errorResponseSchema } },
+      schema: {
+        response: { 200: campaignListResponse, 401: errorResponseSchema, 500: errorResponseSchema },
+      },
     },
     async (request) => ({ campaigns: await campaignService.list(accountId(request)) }),
   );
@@ -111,7 +122,12 @@ export function registerCampaignRoutes<Logger extends FastifyBaseLogger>(
       preHandler: authentication,
       schema: {
         params: campaignParams,
-        response: { 200: campaignResponse, 401: errorResponseSchema, 404: errorResponseSchema },
+        response: {
+          200: campaignResponse,
+          401: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
       },
     },
     async (request) => {

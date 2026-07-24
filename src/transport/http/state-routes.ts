@@ -14,8 +14,12 @@ import type { StateQueryService } from "../../application/state/service.js";
 import type { SessionService } from "../../application/sessions/service.js";
 import { authenticateSession } from "./auth-hook.js";
 import { errorResponseSchema } from "./error-handler.js";
-
-const linkMap = Type.Record(Type.String(), Type.String());
+import {
+  campaignStateResponse,
+  colonyOverviewResponse,
+  galaxyOverviewResponse,
+  systemDetailResponse,
+} from "./a1-schemas.js";
 
 const campaignParams = Type.Object({ campaignId: Type.String({ minLength: 1 }) });
 const systemParams = Type.Object({
@@ -27,86 +31,12 @@ const empireScopeParams = Type.Object({
   empireId: Type.String({ minLength: 1 }),
 });
 
-export const campaignStateResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  status: Type.Literal("running"),
-  timeProfile: Type.String({ minLength: 1 }),
-  campaignTimeMs: Type.Integer({ minimum: 0 }),
-  stateVersion: Type.Integer({ minimum: 1 }),
-  balancingVersion: Type.String({ minLength: 1 }),
-  balancingHash: Type.String({ minLength: 1 }),
-  controlledEmpire: Type.Object({
-    empireId: Type.String({ minLength: 1 }),
-    name: Type.String({ minLength: 1 }),
-    canControl: Type.Boolean(),
-  }),
-  links: linkMap,
-});
-
-export const galaxyOverviewResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  stateVersion: Type.Integer({ minimum: 1 }),
-  startSystemId: Type.String({ minLength: 1 }),
-  knownSystems: Type.Array(
-    Type.Object({
-      systemId: Type.String({ minLength: 1 }),
-      regionId: Type.String({ minLength: 1 }),
-      starCount: Type.Integer({ minimum: 0 }),
-      planetCount: Type.Integer({ minimum: 0 }),
-      links: linkMap,
-    }),
-  ),
-  knownConnections: Type.Array(
-    Type.Object({
-      connectionId: Type.String({ minLength: 1 }),
-      fromSystemId: Type.String({ minLength: 1 }),
-      toSystemId: Type.String({ minLength: 1 }),
-      distance: Type.Integer({ minimum: 1 }),
-    }),
-  ),
-});
-
-export const systemDetailResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  stateVersion: Type.Integer({ minimum: 1 }),
-  systemId: Type.String({ minLength: 1 }),
-  regionId: Type.String({ minLength: 1 }),
-  stars: Type.Array(
-    Type.Object({
-      starId: Type.String({ minLength: 1 }),
-      starClass: Type.String({ minLength: 1 }),
-    }),
-  ),
-  planets: Type.Array(
-    Type.Object({
-      planetId: Type.String({ minLength: 1 }),
-      category: Type.String({ minLength: 1 }),
-      size: Type.String({ minLength: 1 }),
-      homeworldEligible: Type.Boolean(),
-    }),
-  ),
-});
-
-export const colonyOverviewResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  empireId: Type.String({ minLength: 1 }),
-  stateVersion: Type.Integer({ minimum: 1 }),
-  colonies: Type.Array(
-    Type.Object({
-      colonyId: Type.String({ minLength: 1 }),
-      systemId: Type.String({ minLength: 1 }),
-      planetId: Type.String({ minLength: 1 }),
-      isHomeColony: Type.Boolean(),
-      lifecycleState: Type.String({ minLength: 1 }),
-      specialization: Type.String({ minLength: 1 }),
-      planet: Type.Object({
-        category: Type.String({ minLength: 1 }),
-        size: Type.String({ minLength: 1 }),
-      }),
-      links: linkMap,
-    }),
-  ),
-});
+export {
+  campaignStateResponse,
+  colonyOverviewResponse,
+  galaxyOverviewResponse,
+  systemDetailResponse,
+};
 
 type RouteServer<Logger extends FastifyBaseLogger> = FastifyInstance<
   RawServerDefault,
@@ -164,7 +94,12 @@ export function registerStateRoutes<Logger extends FastifyBaseLogger>(
       preHandler: authentication,
       schema: {
         params: campaignParams,
-        response: { 200: campaignStateResponse, ...errorResponses },
+        response: {
+          200: campaignStateResponse,
+          304: {},
+          500: errorResponseSchema,
+          ...errorResponses,
+        },
       },
     },
     async (request, reply) => {
@@ -180,7 +115,12 @@ export function registerStateRoutes<Logger extends FastifyBaseLogger>(
       preHandler: authentication,
       schema: {
         params: campaignParams,
-        response: { 200: galaxyOverviewResponse, ...errorResponses },
+        response: {
+          200: galaxyOverviewResponse,
+          304: {},
+          500: errorResponseSchema,
+          ...errorResponses,
+        },
       },
     },
     async (request, reply) => {
@@ -196,7 +136,12 @@ export function registerStateRoutes<Logger extends FastifyBaseLogger>(
       preHandler: authentication,
       schema: {
         params: systemParams,
-        response: { 200: systemDetailResponse, ...errorResponses },
+        response: {
+          200: systemDetailResponse,
+          304: {},
+          500: errorResponseSchema,
+          ...errorResponses,
+        },
       },
     },
     async (request, reply) => {
@@ -216,7 +161,12 @@ export function registerStateRoutes<Logger extends FastifyBaseLogger>(
       preHandler: authentication,
       schema: {
         params: empireScopeParams,
-        response: { 200: colonyOverviewResponse, ...errorResponses },
+        response: {
+          200: colonyOverviewResponse,
+          304: {},
+          500: errorResponseSchema,
+          ...errorResponses,
+        },
       },
     },
     async (request, reply) => {

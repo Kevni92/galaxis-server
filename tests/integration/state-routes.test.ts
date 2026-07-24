@@ -36,6 +36,7 @@ const campaignState = {
   timeProfile: "standard",
   campaignTimeMs: 0,
   stateVersion: 1,
+  generatedAt: "2026-01-02T00:00:00.000Z",
   balancingVersion: "0.1.0-baseline",
   balancingHash: "h".repeat(64),
   controlledEmpire: { empireId: "emp_1", name: "Startreich", canControl: true },
@@ -53,11 +54,16 @@ const stateService: Pick<
     return {
       campaignId: "cmp_1",
       stateVersion: 1,
+      generatedAt: "2026-01-02T00:00:00.000Z",
       startSystemId: "sys_0001",
       knownSystems: [
         {
           systemId: "sys_0001",
           regionId: "region_0001",
+          knowledgeLevel: "explored",
+          displayNameKey: "system.sys_0001.name",
+          galaxyPosition: { x: 0, y: 0, z: 0 },
+          renderKind: "star_system",
           starCount: 1,
           planetCount: 3,
           links: { self: "/api/v1/campaigns/cmp_1/systems/sys_0001" },
@@ -73,21 +79,56 @@ const stateService: Pick<
     return {
       campaignId: "cmp_1",
       stateVersion: 1,
+      generatedAt: "2026-01-02T00:00:00.000Z",
       systemId: "sys_0001",
       regionId: "region_0001",
-      stars: [{ starId: "star_0001", starClass: "yellow" }],
+      knowledgeLevel: "explored",
+      displayNameKey: "system.sys_0001.name",
+      stars: [
+        {
+          starId: "star_0001",
+          objectType: "star",
+          systemId: "sys_0001",
+          knowledgeLevel: "explored",
+          displayNameKey: "star.star_0001.name",
+          localPosition: { x: 0, y: 0 },
+          renderKind: "yellow_star",
+          starClass: "yellow",
+          links: { self: "/api/v1/campaigns/cmp_1/systems/sys_0001" },
+        },
+      ],
       planets: [
         {
           planetId: "planet_0001_01",
+          objectType: "planet",
+          systemId: "sys_0001",
+          knowledgeLevel: "explored",
+          displayNameKey: "planet.planet_0001_01.name",
+          localPosition: { x: 120.5, y: -44 },
+          renderKind: "terrestrial_planet",
           category: "terrestrial",
           size: "medium",
           homeworldEligible: true,
+          links: {
+            self: "/api/v1/campaigns/cmp_1/systems/sys_0001",
+            colonies: "/api/v1/campaigns/cmp_1/empires/emp_1/colonies",
+          },
         },
       ],
+      links: {
+        self: "/api/v1/campaigns/cmp_1/systems/sys_0001",
+        galaxy: "/api/v1/campaigns/cmp_1/galaxy",
+      },
     };
   },
   async getColonyOverview() {
-    return { campaignId: "cmp_1", empireId: "emp_1", stateVersion: 1, colonies: [] };
+    return {
+      campaignId: "cmp_1",
+      empireId: "emp_1",
+      stateVersion: 1,
+      generatedAt: "2026-01-02T00:00:00.000Z",
+      colonies: [],
+    };
   },
 };
 

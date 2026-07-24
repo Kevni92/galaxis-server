@@ -191,8 +191,8 @@ pnpm architecture:check
 pnpm smoke:a0
 ```
 
-`test:contract` prüft die OpenAPI-Struktur, TypeBox-Schemas und den A0-REST-
-Ablauf. `test:integration` und `test:contract` verwenden PostgreSQL-
+`test:contract` prüft beide OpenAPI-Spezifikationen (A0 und A1), ihre Beispiele,
+TypeBox-Schemas und den A0-/A1-REST-Ablauf. `test:integration` und `test:contract` verwenden PostgreSQL-
 Testcontainer und überspringen datenbankabhängige Tests nur, wenn Docker nicht
 verfügbar ist. `architecture:check` führt sowohl die direkte Boundary-Prüfung
 als auch `dependency-cruiser` aus. Der CI-Workflow verwendet dieselben pnpm-

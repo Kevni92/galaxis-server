@@ -12,6 +12,8 @@ export interface PopulationSummaryResponse {
   readonly empireId: string;
   readonly colonyId: string;
   readonly systemId: string;
+  readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly totalPopulation: number;
   readonly employablePopulation: number;
   readonly employedPopulation: number;
@@ -24,6 +26,8 @@ export interface EconomySummaryResponse {
   readonly empireId: string;
   readonly colonyId: string;
   readonly systemId: string;
+  readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly essentialSupply: {
     readonly quantity: number;
     readonly reserved: number;
@@ -63,6 +67,8 @@ export class PopulationService {
       empireId,
       colonyId: baseline.colonyId,
       systemId: baseline.systemId,
+      stateVersion: baseline.stateVersion,
+      generatedAt: baseline.generatedAt,
       totalPopulation: populationGroup.total,
       employablePopulation: populationGroup.employable,
       employedPopulation: populationGroup.employed,
@@ -83,6 +89,8 @@ export class PopulationService {
       empireId,
       colonyId: baseline.colonyId,
       systemId: baseline.systemId,
+      stateVersion: baseline.stateVersion,
+      generatedAt: baseline.generatedAt,
       essentialSupply: {
         quantity: essentialSupplyStock.quantity,
         reserved: essentialSupplyStock.reserved,

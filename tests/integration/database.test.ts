@@ -381,6 +381,8 @@ describe("PostgreSQL database foundation", () => {
       ).resolves.toEqual({
         colonyId: colony.id,
         systemId: colony.systemId,
+        stateVersion: 1,
+        generatedAt: "2026-01-02T00:00:00.000Z",
         populationGroup,
         essentialSupplyStock,
       });

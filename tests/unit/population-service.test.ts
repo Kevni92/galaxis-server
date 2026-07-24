@@ -30,6 +30,8 @@ const readableEmpire: EmpireWithController = {
 const baseline: HomeColonyBaselineView = {
   colonyId: "col_1",
   systemId: "sys_1",
+  stateVersion: 1,
+  generatedAt: "2026-01-02T00:00:00.000Z",
   populationGroup: {
     id: "pop_1",
     campaignId: "cmp_1",
@@ -85,6 +87,8 @@ describe("PopulationService", () => {
       empireId: "emp_1",
       colonyId: "col_1",
       systemId: "sys_1",
+      stateVersion: 1,
+      generatedAt: "2026-01-02T00:00:00.000Z",
       totalPopulation: 1000,
       employablePopulation: 600,
       employedPopulation: 564,

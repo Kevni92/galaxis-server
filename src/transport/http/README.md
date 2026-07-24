@@ -10,8 +10,10 @@ und `.../economy` der Heimatkolonie.
 
 [`state-routes.ts`](state-routes.ts) registriert die A1-Zustandsabfragen
 `GET .../{campaignId}/state`, `.../galaxy`, `.../systems/{systemId}` und
-`.../empires/{empireId}/colonies` mit schwachem ETag aus `stateVersion` und
-`304`-Antwort bei passendem `If-None-Match`.
+`.../empires/{empireId}/colonies` mit den vollständigen A1-Sichtbarkeitsfeldern,
+schwachem ETag aus `stateVersion` und `304`-Antwort bei passendem
+`If-None-Match`. [`a1-schemas.ts`](a1-schemas.ts) bündelt die strikten
+TypeBox-A1-Response-Schemas.
 
 [`session-routes.ts`](session-routes.ts) registriert die drei Bearer-Sessionrouten;
 [`auth-hook.ts`](auth-hook.ts) stellt bestätigte Identität für geschützte Routen bereit.

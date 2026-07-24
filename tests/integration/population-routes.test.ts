@@ -36,6 +36,8 @@ const populationSummary = {
   empireId: "emp_1",
   colonyId: "col_1",
   systemId: "sys_1",
+  stateVersion: 1,
+  generatedAt: "2026-01-02T00:00:00.000Z",
   totalPopulation: 1000,
   employablePopulation: 600,
   employedPopulation: 564,
@@ -48,6 +50,8 @@ const economySummary = {
   empireId: "emp_1",
   colonyId: "col_1",
   systemId: "sys_1",
+  stateVersion: 1,
+  generatedAt: "2026-01-02T00:00:00.000Z",
   essentialSupply: { quantity: 7_000_000, reserved: 0, available: 7_000_000, coverageDays: 7 },
 };
 

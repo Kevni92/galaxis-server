@@ -22,6 +22,7 @@ export interface CampaignStateResponse {
   readonly timeProfile: string;
   readonly campaignTimeMs: number;
   readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly balancingVersion: string;
   readonly balancingHash: string;
   readonly controlledEmpire: {
@@ -35,10 +36,15 @@ export interface CampaignStateResponse {
 export interface GalaxyOverviewResponse {
   readonly campaignId: string;
   readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly startSystemId: string;
   readonly knownSystems: readonly {
     readonly systemId: string;
     readonly regionId: string;
+    readonly knowledgeLevel: string;
+    readonly displayNameKey: string;
+    readonly galaxyPosition: { readonly x: number; readonly y: number; readonly z: number };
+    readonly renderKind: string;
     readonly starCount: number;
     readonly planetCount: number;
     readonly links: Readonly<Record<string, string>>;
@@ -54,21 +60,43 @@ export interface GalaxyOverviewResponse {
 export interface SystemDetailResponse {
   readonly campaignId: string;
   readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly systemId: string;
   readonly regionId: string;
-  readonly stars: readonly { readonly starId: string; readonly starClass: string }[];
+  readonly knowledgeLevel: string;
+  readonly displayNameKey: string;
+  readonly stars: readonly {
+    readonly starId: string;
+    readonly objectType: "star";
+    readonly systemId: string;
+    readonly knowledgeLevel: string;
+    readonly displayNameKey: string;
+    readonly localPosition: { readonly x: number; readonly y: number };
+    readonly renderKind: string;
+    readonly starClass: string;
+    readonly links: Readonly<Record<string, string>>;
+  }[];
   readonly planets: readonly {
     readonly planetId: string;
+    readonly objectType: "planet";
+    readonly systemId: string;
+    readonly knowledgeLevel: string;
+    readonly displayNameKey: string;
+    readonly localPosition: { readonly x: number; readonly y: number };
+    readonly renderKind: string;
     readonly category: string;
     readonly size: string;
     readonly homeworldEligible: boolean;
+    readonly links: Readonly<Record<string, string>>;
   }[];
+  readonly links: Readonly<Record<string, string>>;
 }
 
 export interface ColonyOverviewResponse {
   readonly campaignId: string;
   readonly empireId: string;
   readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly colonies: readonly {
     readonly colonyId: string;
     readonly systemId: string;
@@ -103,6 +131,18 @@ function base(campaignId: string): string {
   return `/api/v1/campaigns/${campaignId}`;
 }
 
+function generatedAt(campaign: Campaign): string {
+  return new Date(campaign.createdAt).toISOString();
+}
+
+function displayNameKey(prefix: string, id: string): string {
+  return `${prefix}.${id}.name`;
+}
+
+function renderKind(prefix: string): string {
+  return `${prefix.replaceAll("-", "_")}`;
+}
+
 /**
  * Liefert die reichsspezifischen A1-Lesezustände: Kampagnenübersicht, bekannte Galaxie,
  * Systemdetail und Kolonieübersicht. Jede Antwort ist nach Session, Kampagnenzugriff und
@@ -134,6 +174,7 @@ export class StateQueryService {
       timeProfile: campaign.timeProfile,
       campaignTimeMs: campaign.campaignTimeMs,
       stateVersion: campaign.stateVersion,
+      generatedAt: generatedAt(campaign),
       balancingVersion: campaign.balancingVersion,
       balancingHash: campaign.balancingHash,
       controlledEmpire: {
@@ -165,6 +206,10 @@ export class StateQueryService {
       .map((system) => ({
         systemId: system.id,
         regionId: system.regionId,
+        knowledgeLevel: "explored",
+        displayNameKey: displayNameKey("system", system.id),
+        galaxyPosition: { x: system.coordinate.x, y: system.coordinate.y, z: 0 },
+        renderKind: "star_system",
         starCount: system.stars.length,
         planetCount: system.planets.length,
         links: { self: `${base(campaignId)}/systems/${system.id}` },
@@ -184,6 +229,7 @@ export class StateQueryService {
     return {
       campaignId,
       stateVersion: campaign.stateVersion,
+      generatedAt: generatedAt(campaign),
       startSystemId: galaxy.startSystemId,
       knownSystems,
       knownConnections,
@@ -208,15 +254,44 @@ export class StateQueryService {
     return {
       campaignId,
       stateVersion: campaign.stateVersion,
+      generatedAt: generatedAt(campaign),
       systemId: system.id,
       regionId: system.regionId,
-      stars: system.stars.map((star) => ({ starId: star.id, starClass: star.starClass })),
+      knowledgeLevel: "explored",
+      displayNameKey: displayNameKey("system", system.id),
+      stars: system.stars.map((star) => ({
+        starId: star.id,
+        objectType: "star",
+        systemId: system.id,
+        knowledgeLevel: "explored",
+        displayNameKey: displayNameKey("star", star.id),
+        localPosition: star.localPosition,
+        renderKind: renderKind(`${star.starClass}_star`),
+        starClass: star.starClass,
+        links: { self: `${base(campaignId)}/systems/${system.id}` },
+      })),
       planets: system.planets.map((planet) => ({
         planetId: planet.id,
+        objectType: "planet",
+        systemId: system.id,
+        knowledgeLevel: "explored",
+        displayNameKey: displayNameKey("planet", planet.id),
+        localPosition: planet.localPosition,
+        renderKind: renderKind(`${planet.category}_planet`),
         category: planet.category,
         size: planet.size,
         homeworldEligible: planet.homeworldEligible,
+        links: {
+          self: `${base(campaignId)}/systems/${system.id}`,
+          ...(planet.homeworldEligible
+            ? { colonies: `${base(campaignId)}/empires/${empire.empire.id}/colonies` }
+            : {}),
+        },
       })),
+      links: {
+        self: `${base(campaignId)}/systems/${system.id}`,
+        galaxy: `${base(campaignId)}/galaxy`,
+      },
     };
   }
 
@@ -239,7 +314,13 @@ export class StateQueryService {
               isHomeColony: home.colony.isHomeColony,
               lifecycleState: home.colony.lifecycleState,
               specialization: home.colony.specialization,
-              planet: { category: home.planet.category, size: home.planet.size },
+              planet: {
+                category: home.planet.category,
+                size: home.planet.size,
+                knowledgeLevel: "explored",
+                displayNameKey: "planet.home.name",
+                renderKind: renderKind(`${home.planet.category}_planet`),
+              },
               links: {
                 system: `${base(campaignId)}/systems/${home.colony.systemId}`,
                 population: `${base(campaignId)}/empires/${empire.empire.id}/population`,
@@ -252,6 +333,7 @@ export class StateQueryService {
       campaignId,
       empireId: empire.empire.id,
       stateVersion: campaign.stateVersion,
+      generatedAt: generatedAt(campaign),
       colonies,
     };
   }
