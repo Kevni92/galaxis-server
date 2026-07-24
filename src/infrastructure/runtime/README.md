@@ -12,10 +12,14 @@ steuerbar und reproduzierbar.
 
 ## Simulations-PRNG
 
-`xorshift32-v1` arbeitet ausschließlich mit einem unsigned 32-Bit-Zustand.
-Seed und Stream-ID werden zuerst deterministisch über FNV-1a und einen festen
-32-Bit-Finalizer gemischt. Jeder Folgezustand berechnet dann exakt
-`x ^= x << 13`, `x ^= x >>> 17`, `x ^= x << 5`; alle Schritte werden auf
-unsigned 32 Bit gekürzt. Bereichswerte verwenden Rejection Sampling statt
-eines verzerrenden einfachen Modulo. Algorithmuskennung, Seed, Stream-ID und
-Aufrufreihenfolge gehören deshalb zum reproduzierbaren Simulationsinput.
+`xorshift32-v1` arbeitet intern ausschließlich mit einem unsigned 32-Bit-Zustand.
+Der Kampagnen-Seed folgt jedoch dem REST-Vertrag und darf bis
+`Number.MAX_SAFE_INTEGER` reichen; `foldSeedToUint32` faltet ihn deterministisch
+auf 32 Bit (Seeds unter 2^32 bleiben dabei unverändert, sodass bestehende
+Golden-Seed-Ergebnisse stabil bleiben). Das gefaltete Ergebnis wird zusammen mit
+der Stream-ID zuerst über FNV-1a und einen festen 32-Bit-Finalizer gemischt.
+Jeder Folgezustand berechnet dann exakt `x ^= x << 13`, `x ^= x >>> 17`,
+`x ^= x << 5`; alle Schritte werden auf unsigned 32 Bit gekürzt. Bereichswerte
+verwenden Rejection Sampling statt eines verzerrenden einfachen Modulo.
+Algorithmuskennung, ungefalteter Seed, Stream-ID und Aufrufreihenfolge gehören
+deshalb zum reproduzierbaren Simulationsinput.

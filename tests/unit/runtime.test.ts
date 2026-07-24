@@ -50,6 +50,33 @@ describe("runtime providers", () => {
     ]);
   });
 
+  it("accepts contract-range seeds above 2^32 deterministically (regression for #57)", () => {
+    const seed = 3_123_368_816_958_382; // exceeds 2^32, from a real client-reported failure
+    const first = new XorShift32RandomStream(seed, "galaxy");
+    const replay = new XorShift32RandomStream(seed, "galaxy");
+
+    expect([first.nextUint32(), first.nextUint32()]).toEqual([
+      replay.nextUint32(),
+      replay.nextUint32(),
+    ]);
+  });
+
+  it("distinguishes seeds that differ only above bit 32", () => {
+    const UINT32_RANGE = 0x1_0000_0000;
+    const low = new XorShift32RandomStream(42, "galaxy");
+    const high = new XorShift32RandomStream(42 + UINT32_RANGE, "galaxy");
+
+    expect(high.nextUint32()).not.toBe(low.nextUint32());
+  });
+
+  it("still rejects seeds outside the contract's safe-integer range", () => {
+    expect(() => new XorShift32RandomStream(-1, "galaxy")).toThrow(RangeError);
+    expect(() => new XorShift32RandomStream(1.5, "galaxy")).toThrow(RangeError);
+    expect(() => new XorShift32RandomStream(Number.MAX_SAFE_INTEGER + 1, "galaxy")).toThrow(
+      RangeError,
+    );
+  });
+
   it("separates streams while preserving seed and call-order determinism", () => {
     const first = new XorShift32RandomStream(42, "events");
     const replay = new XorShift32RandomStream(42, "events");
