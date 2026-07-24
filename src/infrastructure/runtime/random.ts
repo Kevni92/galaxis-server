@@ -17,16 +17,39 @@ function assertUint32(value: number, label: string): void {
   }
 }
 
+/** Seeds follow the REST contract range (0 .. Number.MAX_SAFE_INTEGER), wider than a uint32. */
+function assertSafeSeed(value: number, label: string): void {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new RangeError(`${label} must be a non-negative safe integer`);
+  }
+}
+
 function assertBound(maxExclusive: number): void {
   if (!Number.isInteger(maxExclusive) || maxExclusive <= 0 || maxExclusive > UINT32_RANGE) {
     throw new RangeError("maxExclusive must be an integer from 1 to 2^32");
   }
 }
 
-function streamState(seed: number, streamId: string): number {
-  assertUint32(seed, "seed");
+/**
+ * Folds a contract-range seed (up to 2^53-1) into the uint32 state the xorshift core
+ * needs. Seeds below 2^32 fold to themselves unchanged, so existing golden-seed
+ * results stay stable; only the high bits of larger seeds get mixed in, so seeds that
+ * differ solely above bit 32 (e.g. seed vs. seed + 2^32) still produce different streams.
+ */
+function foldSeedToUint32(seed: number): number {
+  const low = seed >>> 0;
+  const high = Math.floor(seed / UINT32_RANGE);
+  if (high === 0) return low;
 
-  let hash = (seed ^ 0x811c9dc5) >>> 0;
+  let mixedHigh = Math.imul(high ^ 0x9e3779b9, 0x85ebca6b) >>> 0;
+  mixedHigh ^= mixedHigh >>> 15;
+  return (low ^ mixedHigh) >>> 0;
+}
+
+function streamState(seed: number, streamId: string): number {
+  assertSafeSeed(seed, "seed");
+
+  let hash = (foldSeedToUint32(seed) ^ 0x811c9dc5) >>> 0;
   for (let index = 0; index < streamId.length; index += 1) {
     hash ^= streamId.charCodeAt(index);
     hash = Math.imul(hash, 0x01000193) >>> 0;
@@ -59,7 +82,7 @@ export class XorShift32RandomStream implements RandomStream {
   private state: number;
 
   public constructor(seed: number, streamId: string) {
-    assertUint32(seed, "seed");
+    assertSafeSeed(seed, "seed");
     if (streamId.length === 0) throw new RangeError("streamId must not be empty");
     this.seed = seed;
     this.streamId = streamId;

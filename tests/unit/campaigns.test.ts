@@ -293,6 +293,19 @@ describe("CampaignService", () => {
     });
   });
 
+  it("creates a campaign for a contract-range seed above 2^32 (regression for #57)", async () => {
+    const { service } = createService();
+
+    await expect(
+      service.create({
+        accountId: "acc_owner",
+        seed: 3_123_368_816_958_382,
+        timeProfile: "standard",
+        idempotencyKey: "create-1",
+      }),
+    ).resolves.toMatchObject({ seed: 3_123_368_816_958_382 });
+  });
+
   it("rejects a failed galaxy generation before repository persistence", async () => {
     const repository = new FakeCampaignRepository();
     const galaxyGenerator: GalaxyGenerator = {
