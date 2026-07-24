@@ -34,6 +34,7 @@ export interface GalaxyCoordinate {
 export interface GalaxyStar {
   readonly id: string;
   readonly starClass: StarClass;
+  readonly localPosition: GalaxyCoordinate;
 }
 
 export interface GalaxyPlanet {
@@ -42,6 +43,7 @@ export interface GalaxyPlanet {
   readonly category: PlanetCategory;
   readonly size: PlanetSize;
   readonly homeworldEligible: boolean;
+  readonly localPosition: GalaxyCoordinate;
 }
 
 export interface GalaxySystem {

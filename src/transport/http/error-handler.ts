@@ -21,23 +21,47 @@ const technicalErrorMessages = {
   internal: "Ein unerwarteter Serverfehler ist aufgetreten.",
 } as const;
 
-export const errorResponseSchema = Type.Object({
-  error: Type.Object({
-    code: Type.String({ minLength: 1 }),
-    message: Type.String({ minLength: 1 }),
-    correlationId: Type.String({ minLength: 1 }),
-    details: Type.Optional(
-      Type.Array(
-        Type.Object({
-          field: Type.String({ minLength: 1 }),
-          reason: Type.String({ minLength: 1 }),
-        }),
-      ),
+export const errorResponseSchema = Type.Object(
+  {
+    error: Type.Object(
+      {
+        code: Type.Union([
+          Type.Literal("INVALID_REQUEST"),
+          Type.Literal("ACCOUNT_REGISTRATION_REJECTED"),
+          Type.Literal("AUTHENTICATION_FAILED"),
+          Type.Literal("SESSION_INVALID"),
+          Type.Literal("INVALID_CAMPAIGN"),
+          Type.Literal("UNAUTHORIZED"),
+          Type.Literal("FORBIDDEN"),
+          Type.Literal("CAMPAIGN_NOT_FOUND"),
+          Type.Literal("RESOURCE_NOT_FOUND"),
+          Type.Literal("CONFLICT"),
+          Type.Literal("CAMPAIGN_CREATE_CONFLICT"),
+          Type.Literal("CAMPAIGN_INCOMPATIBLE"),
+          Type.Literal("RATE_LIMITED"),
+          Type.Literal("INTERNAL_ERROR"),
+        ]),
+        message: Type.String({ minLength: 1 }),
+        correlationId: Type.String({ minLength: 1 }),
+        details: Type.Optional(
+          Type.Array(
+            Type.Object(
+              {
+                field: Type.String({ minLength: 1 }),
+                reason: Type.String({ minLength: 1 }),
+              },
+              { additionalProperties: false },
+            ),
+          ),
+        ),
+        retryable: Type.Boolean(),
+        currentStateVersion: Type.Optional(Type.Integer({ minimum: 0 })),
+      },
+      { additionalProperties: false },
     ),
-    retryable: Type.Boolean(),
-    currentStateVersion: Type.Optional(Type.Integer({ minimum: 0 })),
-  }),
-});
+  },
+  { additionalProperties: false },
+);
 
 interface ErrorResponseOptions {
   readonly code: string;

@@ -16,36 +16,14 @@ import type { PopulationService } from "../../application/population/service.js"
 import type { SessionService } from "../../application/sessions/service.js";
 import { authenticateSession } from "./auth-hook.js";
 import { errorResponseSchema } from "./error-handler.js";
+import { economySummaryResponse, populationSummaryResponse } from "./a1-schemas.js";
 
 const empireScopeParams = Type.Object({
   campaignId: Type.String({ minLength: 1 }),
   empireId: Type.String({ minLength: 1 }),
 });
 
-export const populationSummaryResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  empireId: Type.String({ minLength: 1 }),
-  colonyId: Type.String({ minLength: 1 }),
-  systemId: Type.String({ minLength: 1 }),
-  totalPopulation: Type.Integer({ minimum: 0 }),
-  employablePopulation: Type.Integer({ minimum: 0 }),
-  employedPopulation: Type.Integer({ minimum: 0 }),
-  unemployedPopulation: Type.Integer({ minimum: 0 }),
-  nonWorkforcePopulation: Type.Integer({ minimum: 0 }),
-});
-
-export const economySummaryResponse = Type.Object({
-  campaignId: Type.String({ minLength: 1 }),
-  empireId: Type.String({ minLength: 1 }),
-  colonyId: Type.String({ minLength: 1 }),
-  systemId: Type.String({ minLength: 1 }),
-  essentialSupply: Type.Object({
-    quantity: Type.Integer({ minimum: 0 }),
-    reserved: Type.Integer({ minimum: 0 }),
-    available: Type.Integer({ minimum: 0 }),
-    coverageDays: Type.Integer({ minimum: 0 }),
-  }),
-});
+export { economySummaryResponse, populationSummaryResponse };
 
 type RouteServer<Logger extends FastifyBaseLogger> = FastifyInstance<
   RawServerDefault,
@@ -78,6 +56,7 @@ export function registerPopulationRoutes<Logger extends FastifyBaseLogger>(
           200: populationSummaryResponse,
           401: errorResponseSchema,
           404: errorResponseSchema,
+          500: errorResponseSchema,
         },
       },
     },
@@ -101,6 +80,7 @@ export function registerPopulationRoutes<Logger extends FastifyBaseLogger>(
           200: economySummaryResponse,
           401: errorResponseSchema,
           404: errorResponseSchema,
+          500: errorResponseSchema,
         },
       },
     },

@@ -1,8 +1,8 @@
 # A1-Zustandsabfragen
 
-| Datei                      | Verantwortung                                                                                 | Fachliche Quelle                                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| [`service.ts`](service.ts) | Gefilterte Lesezustände: Kampagnenübersicht, bekannte Galaxie, Systemdetail, Kolonieübersicht | [`docs/contracts/rest-api/galaxis-rest-v1.md`](../../../docs/contracts/rest-api/galaxis-rest-v1.md) |
+| Datei                      | Verantwortung                                                                                                         | Fachliche Quelle                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [`service.ts`](service.ts) | Gefilterte Lesezustände mit Zeitstempel, Wissensstufe, Namensschlüsseln, autoritativer XY-Position und Linkrelationen | [`docs/contracts/rest-api/galaxis-rest-v1.md`](../../../docs/contracts/rest-api/galaxis-rest-v1.md) |
 
 Der `StateQueryService` komponiert bestehende Repositories
 ([`CampaignRepository`](../campaigns/ports.ts), [`EmpireRepository`](../empires/ports.ts),

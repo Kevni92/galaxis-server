@@ -70,6 +70,7 @@ function createStar(random: RandomStream, index: number): GalaxyStar {
   return {
     id: numberedId("star", index),
     starClass: randomItem(random, STAR_CLASSES),
+    localPosition: { x: 0, y: 0 },
   };
 }
 
@@ -85,6 +86,10 @@ function createPlanet(
     category: homeworldEligible ? "terrestrial" : randomItem(random, PLANET_CATEGORIES),
     size: randomItem(random, PLANET_SIZES),
     homeworldEligible,
+    localPosition: {
+      x: (planetIndex + 1) * 120.5,
+      y: planetIndex % 2 === 0 ? -44 : 44,
+    },
   };
 }
 

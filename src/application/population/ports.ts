@@ -10,6 +10,8 @@ import type {
 export interface HomeColonyBaselineView {
   readonly colonyId: string;
   readonly systemId: string;
+  readonly stateVersion: number;
+  readonly generatedAt: string;
   readonly populationGroup: PopulationGroup;
   readonly essentialSupplyStock: EssentialSupplyStock;
 }

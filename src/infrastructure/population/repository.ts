@@ -35,10 +35,16 @@ export class KyselyStartBaselineRepository implements StartBaselineRepository {
   ): Promise<HomeColonyBaselineView | undefined> {
     const colonyRow = await this.database
       .selectFrom("colonies")
-      .select(["colony_id", "system_id"])
-      .where("campaign_id", "=", campaignId)
-      .where("empire_id", "=", empireId)
-      .where("is_home_colony", "=", true)
+      .innerJoin("campaigns", "campaigns.campaign_id", "colonies.campaign_id")
+      .select([
+        "colonies.colony_id",
+        "colonies.system_id",
+        "campaigns.state_version",
+        "campaigns.created_at as campaign_created_at",
+      ])
+      .where("colonies.campaign_id", "=", campaignId)
+      .where("colonies.empire_id", "=", empireId)
+      .where("colonies.is_home_colony", "=", true)
       .executeTakeFirst();
     if (colonyRow === undefined) return undefined;
 
@@ -62,6 +68,8 @@ export class KyselyStartBaselineRepository implements StartBaselineRepository {
     return {
       colonyId: colonyRow.colony_id,
       systemId: colonyRow.system_id,
+      stateVersion: Number(colonyRow.state_version),
+      generatedAt: colonyRow.campaign_created_at.toISOString(),
       populationGroup: fromPopulationRow(populationRow),
       essentialSupplyStock: fromStockRow(stockRow),
     };

@@ -91,7 +91,7 @@ function normalizeIds(value: unknown, replacements: ReadonlyMap<string, string>)
   if (typeof value === "object" && value !== null) {
     const result: Record<string, unknown> = {};
     for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-      if (key === "links") continue;
+      if (key === "links" || key === "generatedAt") continue;
       result[key] = normalizeIds(entry, replacements);
     }
     return result;
